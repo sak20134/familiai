@@ -24,6 +24,10 @@ REPOS=(
   stackblitz-labs/bolt.diy
   actualbudget/actual
   obytes/react-native-template-obytes
+  AnubhavChaturvedi-GitHub/jarvis-ai-assistant
+  ayangweb/BongoCat
+  SeakMengs/WindowPet
+  fivestones/family-organizer
   sak20134/kin-agent
 )
 for r in "${REPOS[@]}"; do
