@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' file: data: https://api.openverse.org;" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Family AI Bot</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main id="stage">
+    <section id="chat" class="panel" data-hit hidden>
+      <div id="chat-log" aria-live="polite"></div>
+      <form id="chat-form" autocomplete="off">
+        <input id="chat-input" type="text" maxlength="1000" placeholder="Say something..." />
+        <button type="submit">Send</button>
+      </form>
+      <p id="demo-note" class="note" hidden>Demo mode. Add your key to the .env file for real answers.</p>
+    </section>
+
+    <section id="search" class="panel" data-hit hidden>
+      <form id="search-form" autocomplete="off">
+        <input id="search-input" type="text" maxlength="80" placeholder="Search images, e.g. orange cat" />
+        <button type="submit">Search</button>
+      </form>
+      <p id="search-status" class="note"></p>
+      <div id="results"></div>
+      <p class="note">Free-license images from Openverse. Check each license before sharing.</p>
+    </section>
+
+    <div id="speech" data-hit hidden></div>
+
+    <div id="bot-area">
+      <div id="handle" data-hit title="Drag to move">
+        <span></span><span></span><span></span>
+      </div>
+      <button id="bot" data-hit type="button" aria-label="Your bot. Click to chat.">
+        <img id="bot-img" alt="" hidden />
+        <svg id="bot-cat" viewBox="0 0 200 200" role="img" aria-label="Cat">
+          <polygon points="45,70 55,20 90,50" fill="#e8a24a" />
+          <polygon points="155,70 145,20 110,50" fill="#e8a24a" />
+          <ellipse cx="100" cy="115" rx="70" ry="62" fill="#f2b45a" />
+          <ellipse cx="100" cy="135" rx="38" ry="28" fill="#fbe3b8" />
+          <g class="eyes">
+            <ellipse class="eye" cx="72" cy="105" rx="9" ry="12" fill="#2b2b2b" />
+            <ellipse class="eye" cx="128" cy="105" rx="9" ry="12" fill="#2b2b2b" />
+          </g>
+          <polygon points="94,125 106,125 100,134" fill="#d46a6a" />
+          <path d="M100 134 Q92 144 84 140 M100 134 Q108 144 116 140" stroke="#2b2b2b" stroke-width="3" fill="none" stroke-linecap="round" />
+          <path d="M40 120 L10 112 M40 130 L8 134 M160 120 L190 112 M160 130 L192 134" stroke="#2b2b2b" stroke-width="2.5" stroke-linecap="round" />
+        </svg>
+      </button>
+      <nav id="menu" data-hit aria-label="Bot options">
+        <button type="button" id="btn-chat">Chat</button>
+        <button type="button" id="btn-search">Search</button>
+        <button type="button" id="btn-add">Add image</button>
+        <button type="button" id="btn-bg">Remove bg</button>
+        <button type="button" id="btn-reset">Cat</button>
+        <button type="button" id="btn-quiet">Quiet</button>
+        <button type="button" id="btn-quit">Quit</button>
+      </nav>
+    </div>
+  </main>
+  <script src="renderer.js"></script>
+</body>
+</html>
