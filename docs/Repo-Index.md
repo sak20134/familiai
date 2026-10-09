@@ -113,3 +113,99 @@
 | Voice Chat / wake word / calls | https://github.com/ricky0123/vad | 2026-09-12 | Voice Activity Detection for Javascript |
 | Voice Chat / wake word / calls | https://github.com/snakers4/silero-vad | 2026-09-29 | Mailing list : test(mailto:hello@silero.ai) Mailing list : test License: CC BY-NC 4.0 downloads |
 | Voice Chat / wake word / calls | https://github.com/vocodedev/vocode-core | 2024-11-15 | Build voice-based LLM apps in minutes |
+
+# Second batch: 91 more repos by kind (Oct 9 2026)
+
+| Module | Repo | Size MB | Latest commit |
+|---|---|---|---|
+| Elder care / health | https://github.com/fossasia/phimpme-android | 32 | 2022-03-10 |
+| Elder care / health | https://github.com/google/fhir-gateway | 3 | 2026-09-29 |
+| Elder care / health | https://github.com/medplum/medplum | 369 | 2026-10-09 |
+| Elder care / health | https://github.com/openmrs/openmrs-core | 40 | 2026-10-08 |
+| Kids Learning Coach / languages | https://github.com/AI4Bharat/Indic-TTS | 2 | 2024-11-08 |
+| Kids Learning Coach / languages | https://github.com/AI4Bharat/IndicTrans2 | 2 | 2025-10-03 |
+| Kids Learning Coach / languages | https://github.com/Helsinki-NLP/OPUS-MT-train | 325 | 2026-01-17 |
+| Kids Learning Coach / languages | https://github.com/LibreTranslate/LibreTranslate | 5 | 2026-09-27 |
+| Kids Learning Coach / languages | https://github.com/ankitects/anki | 26 | 2026-10-08 |
+| Kids Learning Coach / languages | https://github.com/argosopentech/argos-translate | 6 | 2026-08-08 |
+| Kids Learning Coach / languages | https://github.com/khan/perseus | 60 | 2026-10-08 |
+| Kids Learning Coach / languages | https://github.com/openedx/edx-platform | 207 | 2026-10-09 |
+| Kids Learning Coach / languages | https://github.com/scratchfoundation/scratch-gui | 137 | 2026-05-29 |
+| Emergency Mode / location / maps | https://github.com/Freeyourgadget/Gadgetbridge | 50 | 2024-12-22 |
+| Emergency Mode / location / maps | https://github.com/mapbox/mapbox-gl-js | 676 | 2026-10-09 |
+| Emergency Mode / location / maps | https://github.com/maplibre/maplibre-native | 505 | 2026-10-09 |
+| Emergency Mode / location / maps | https://github.com/osmandapp/OsmAnd | 151 | 2026-10-09 |
+| Emergency Mode / location / maps | https://github.com/owntracks/android | 8 | 2026-10-05 |
+| Emergency Mode / location / maps | https://github.com/traccar/traccar | 14 | 2026-10-09 |
+| Family chat / calls | https://github.com/element-hq/element-android | 71 | 2026-09-25 |
+| Family chat / calls | https://github.com/jitsi/jitsi-meet | 298 | 2026-10-09 |
+| Family chat / calls | https://github.com/matrix-org/synapse | 48 | 2023-12-13 |
+| Family chat / calls | https://github.com/pion/webrtc | 5 | 2026-10-07 |
+| Family chat / calls | https://github.com/signalapp/Signal-Android | 200 | 2026-10-08 |
+| Family chat / calls | https://github.com/tdlib/td | 40 | 2026-10-09 |
+| Family chat / calls | https://github.com/zulip/zulip | 201 | 2026-08-21 |
+| Parental control / privacy / backups | https://github.com/AdguardTeam/AdGuardHome | 27 | 2026-10-08 |
+| Parental control / privacy / backups | https://github.com/GrapheneOS/Auditor | 2 | 2026-09-29 |
+| Parental control / privacy / backups | https://github.com/NeoApplications/Neo-Backup | 20 | 2026-05-03 |
+| Parental control / privacy / backups | https://github.com/bitwarden/mobile | 87 | 2025-05-14 |
+| Parental control / privacy / backups | https://github.com/ente-io/photos-web | 187 | 2024-03-03 |
+| Parental control / privacy / backups | https://github.com/pi-hole/pi-hole | 2 | 2026-07-06 |
+| Parental control / privacy / backups | https://github.com/topjohnwu/Magisk | 8 | 2026-10-09 |
+| Money approval / payments | https://github.com/getlago/lago | 37 | 2026-10-08 |
+| Money approval / payments | https://github.com/juspay/hyperswitch | 348 | 2026-10-09 |
+| Money approval / payments | https://github.com/razorpay/razorpay-java | 2 | 2026-07-29 |
+| Money approval / payments | https://github.com/razorpay/razorpay-node | 2 | 2026-07-21 |
+| Money approval / payments | https://github.com/stripe/stripe-node | 17 | 2026-09-30 |
+| Family Memory Timeline / notes / photos | https://github.com/LibrePhotos/librephotos | 39 | 2026-10-09 |
+| Family Memory Timeline / notes / photos | https://github.com/ente-io/ente | 233 | 2026-10-09 |
+| Family Memory Timeline / notes / photos | https://github.com/logseq/logseq | 97 | 2026-10-09 |
+| Family Memory Timeline / notes / photos | https://github.com/nextcloud/android | 100 | 2026-10-05 |
+| Family Memory Timeline / notes / photos | https://github.com/obsidianmd/obsidian-releases | 9 | 2026-10-09 |
+| Family Memory Timeline / notes / photos | https://github.com/photoprism/photoprism | 200 | 2026-10-09 |
+| Family Memory Timeline / notes / photos | https://github.com/siyuan-note/siyuan | 539 | 2026-10-04 |
+| Family Memory Timeline / notes / photos | https://github.com/syncthing/syncthing-android | 11 | 2024-12-03 |
+| Family Memory Timeline / notes / photos | https://github.com/usememos/memos | 19 | 2026-10-09 |
+| Server ops / analytics / feature flags | https://github.com/Unleash/unleash | 59 | 2026-10-09 |
+| Server ops / analytics / feature flags | https://github.com/getsentry/sentry | 337 | 2026-10-09 |
+| Server ops / analytics / feature flags | https://github.com/grafana/grafana | 343 | 2026-10-09 |
+| Server ops / analytics / feature flags | https://github.com/hatchet-dev/hatchet | 233 | 2026-10-09 |
+| Server ops / analytics / feature flags | https://github.com/nats-io/nats-server | 20 | 2026-10-09 |
+| Server ops / analytics / feature flags | https://github.com/redis/redis | 32 | 2026-10-09 |
+| Server ops / analytics / feature flags | https://github.com/supabase/supabase-js | 9 | 2026-10-07 |
+| Server ops / analytics / feature flags | https://github.com/temporalio/temporal | 61 | 2026-10-08 |
+| Server ops / analytics / feature flags | https://github.com/traefik/traefik | 52 | 2026-10-07 |
+| Safety, moderation, privacy filters | https://github.com/Azure/PyRIT | 3 | 2026-03-24 |
+| Safety, moderation, privacy filters | https://github.com/NVIDIA/garak | 19 | 2026-10-08 |
+| Safety, moderation, privacy filters | https://github.com/laiyer-ai/llm-guard | 3 | 2026-07-08 |
+| Safety, moderation, privacy filters | https://github.com/meta-llama/PurpleLlama | 144 | 2026-09-29 |
+| Safety, moderation, privacy filters | https://github.com/microsoft/presidio | 233 | 2026-10-08 |
+| Safety, moderation, privacy filters | https://github.com/protectai/llm-guard | 3 | 2026-07-08 |
+| Safety, moderation, privacy filters | https://github.com/unitaryai/detoxify | 1 | 2026-03-26 |
+| Offline sync / local database | https://github.com/automerge/automerge | 179 | 2026-09-23 |
+| Offline sync / local database | https://github.com/duckdb/duckdb-wasm | 9 | 2026-09-29 |
+| Offline sync / local database | https://github.com/electric-sql/electric | 395 | 2026-10-06 |
+| Offline sync / local database | https://github.com/kuzudb/kuzu | 533 | 2025-10-10 |
+| Offline sync / local database | https://github.com/nozbe/WatermelonDB | 26 | 2025-08-11 |
+| Offline sync / local database | https://github.com/powersync-ja/powersync-js | 32 | 2026-10-08 |
+| Offline sync / local database | https://github.com/realm/realm-js | 86 | 2025-10-16 |
+| Offline sync / local database | https://github.com/rocicorp/mono | 70 | 2026-10-09 |
+| Offline sync / local database | https://github.com/tursodatabase/libsql | 186 | 2026-08-23 |
+| Offline sync / local database | https://github.com/yjs/yjs | 2 | 2026-10-07 |
+| TV app | https://github.com/jellyfin/jellyfin | 28 | 2026-10-09 |
+| TV app | https://github.com/jellyfin/jellyfin-androidtv | 23 | 2026-10-06 |
+| TV app | https://github.com/react-native-tvos/react-native-tvos | 128 | 2026-10-07 |
+| App UI / accessibility / animation | https://github.com/JetBrains/compose-multiplatform | 110 | 2026-10-09 |
+| App UI / accessibility / animation | https://github.com/airbnb/lottie-react-native | 23 | 2026-08-22 |
+| App UI / accessibility / animation | https://github.com/android/compose-samples | 203 | 2026-10-06 |
+| App UI / accessibility / animation | https://github.com/android/nowinandroid | 56 | 2026-09-22 |
+| App UI / accessibility / animation | https://github.com/dequelabs/axe-core | 58 | 2026-10-09 |
+| App UI / accessibility / animation | https://github.com/facebook/react-native | 121 | 2026-10-09 |
+| App UI / accessibility / animation | https://github.com/flutter/flutter | 243 | 2026-10-09 |
+| App UI / accessibility / animation | https://github.com/framer/motion | 540 | 2026-10-08 |
+| App UI / accessibility / animation | https://github.com/gluestack/gluestack-ui | 347 | 2026-09-02 |
+| App UI / accessibility / animation | https://github.com/mui/material-ui | 630 | 2026-10-09 |
+| App UI / accessibility / animation | https://github.com/rive-app/rive-react-native | 29 | 2026-09-01 |
+| App UI / accessibility / animation | https://github.com/shadcn-ui/ui | 83 | 2026-10-09 |
+| App UI / accessibility / animation | https://github.com/software-mansion/react-native-gesture-handler | 123 | 2026-10-09 |
+| App UI / accessibility / animation | https://github.com/tamagui/tamagui | 319 | 2026-10-06 |
+| App UI / accessibility / animation | https://github.com/wix/react-native-ui-lib | 296 | 2026-09-06 |
