@@ -1,48 +1,17 @@
 #!/usr/bin/env bash
-# Pulls every reference repo for Family AI straight from GitHub (latest version).
-# Usage: bash scripts/get-resources.sh   (run again any time to update to the latest)
-set -euo pipefail
+# Pulls every reference repo listed in resources.tsv straight from GitHub (latest version).
+# Usage: bash scripts/get-resources.sh      (run again any time to update)
+set -uo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p resources
-REPOS=(
-  livekit/agents-js
-  livekit-examples/agent-starter-react-native
-  pipecat-ai/pipecat
-  dscripka/openWakeWord
-  moeru-ai/airi
-  Open-LLM-VTuber/Open-LLM-VTuber
-  pixiv/three-vrm
-  trycua/cua
-  browser-use/browser-use
-  mem0ai/mem0
-  letta-ai/letta
-  modelcontextprotocol/typescript-sdk
-  modelcontextprotocol/servers
-  better-auth/better-auth
-  vercel/chatbot
-  assistant-ui/assistant-ui
-  stackblitz-labs/bolt.diy
-  actualbudget/actual
-  obytes/react-native-template-obytes
-  AnubhavChaturvedi-GitHub/jarvis-ai-assistant
-  ayangweb/BongoCat
-  SeakMengs/WindowPet
-  fivestones/family-organizer
-  All-Hands-AI/OpenHands
-  cline/cline
-  Aider-AI/aider
-  continuedev/continue
-  open-webui/open-webui
-  danny-avila/LibreChat
-  langgenius/dify
-  sak20134/kin-agent
-)
-for r in "${REPOS[@]}"; do
-  d="resources/${r##*/}"
+while IFS=$'\t' read -r group repo; do
+  [ -z "${repo:-}" ] && continue
+  d="resources/${repo##*/}"
+  [ -d "$d" ] && [ ! -d "$d/.git" ] && d="resources/${repo%%/*}-${repo##*/}"
   if [ -d "$d/.git" ]; then
-    echo "Updating $r"; git -C "$d" pull --ff-only --depth 1 || true
+    echo "Updating $repo"; git -C "$d" pull -q --ff-only --depth 1 || echo "  (could not update $repo)"
   else
-    echo "Cloning  $r"; git clone --depth 1 "https://github.com/$r" "$d"
+    echo "Cloning  $repo [$group]"; git clone -q --depth 1 --single-branch --filter=blob:limit=2m "https://github.com/$repo" "$d" || echo "  (could not clone $repo)"
   fi
-done
+done < resources.tsv
 echo "Done. Repos are in ./resources"
