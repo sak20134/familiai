@@ -28,6 +28,13 @@ REPOS=(
   ayangweb/BongoCat
   SeakMengs/WindowPet
   fivestones/family-organizer
+  All-Hands-AI/OpenHands
+  cline/cline
+  Aider-AI/aider
+  continuedev/continue
+  open-webui/open-webui
+  danny-avila/LibreChat
+  langgenius/dify
   sak20134/kin-agent
 )
 for r in "${REPOS[@]}"; do
