@@ -3,7 +3,9 @@
 
 import {
   canWrite,
+  type Autonomy,
   type Capability,
+  GoogleCalendar,
   filterReadable,
   makeExpense,
   resolveContact,
@@ -17,11 +19,16 @@ import { z } from 'zod';
 import { asMember, logActivity, type MemberRow, type UserRow } from '../context';
 import { schema, type Db } from '../db/client';
 import { newId } from '../security';
+import { googleTokens } from '../services/google';
+import type { Services } from '../services/types';
 
 export interface ToolContext {
   db: Db;
   member: MemberRow;
   user: UserRow;
+  /** AI Mode and standing permissions for this person (default: none). */
+  autonomy?: Autonomy;
+  services?: Services;
 }
 
 export interface ToolResult {
@@ -159,19 +166,26 @@ export const listReminders = tool('list_reminders', 'low', 'chat', "List this pe
 export const callFamilyMember = tool('call_family_member', 'high', 'use_calls', 'Phone a family member by name, nickname or relation (e.g. "Dad").', {
   input: z.object({ who: z.string().trim().min(1).max(60) }),
   summarize: (a) => `Phone call to ${a.who}`,
-  async run({ db, member }, a) {
+  async run(ctx, a) {
+    const { db, member } = ctx;
     const people = await db
-      .select({ id: schema.members.id, nickname: schema.members.nickname, name: schema.users.displayName })
+      .select({ id: schema.members.id, nickname: schema.members.nickname, name: schema.users.displayName, phone: schema.members.phone })
       .from(schema.members).leftJoin(schema.users, eq(schema.users.id, schema.members.userId))
       .where(eq(schema.members.familyId, member.familyId));
     const contacts = people.map((p) => ({ id: p.id, name: p.name ?? '', aliases: p.nickname ? [p.nickname] : [], phone: '' }));
     const found = resolveContact(a.who, contacts);
     if (found.kind === 'none') throw new Error(`I couldn't find "${a.who}" in your family.`);
     if (found.kind === 'ambiguous') throw new Error(`More than one person matches "${a.who}": ${found.candidates.map((x) => x.name).join(', ')}. Say who exactly.`);
-    // Honest: no phone provider is connected in this version, so we never pretend the call happened.
-    throw new Error(`Phone calls are not connected yet (needs a Twilio or Speko account), so I did not call ${found.contact.name}.`);
+    const calls = ctx.services?.calls;
+    if (!calls) throw new Error(`Phone calls are not connected yet (add a Twilio account in .env), so I did not call ${found.contact.name}.`);
+    const phone = people.find((p) => p.id === found.contact.id)?.phone;
+    if (!phone) throw new Error(`${found.contact.name} has no phone number saved. They can add it in Settings.`);
+    const caller = ctx.member.nickname ?? ctx.user.displayName ?? 'Your family';
+    const { callId } = await calls.provider.startCall({ to: phone, from: calls.from, say: `Hello ${found.contact.name}, ${caller} asked Family AI to call you.` });
+    await logActivity(db, member.familyId, member.id, 'call_placed', `Called ${found.contact.name}.`);
+    return { text: `Calling ${found.contact.name} now.`, data: { callId } };
   },
-  verify: async () => false,
+  verify: async (_ctx, r) => typeof r.data?.callId === 'string' && r.data.callId.length > 0,
 });
 
 export const sendMoney = tool('send_money', 'money', 'chat', 'Pay or transfer real money. Always needs a person to approve, every time.', {
@@ -183,5 +197,62 @@ export const sendMoney = tool('send_money', 'money', 'chat', 'Pay or transfer re
   verify: async () => false,
 });
 
-export const TOOLS: readonly BrainTool[] = [remember, recall, addExpense, moneySummary, addReminder, listReminders, callFamilyMember, sendMoney] as BrainTool[];
+const calendar = (ctx: ToolContext) => {
+  if (!ctx.services?.google) throw new Error('Google Calendar is not set up on this server yet.');
+  return new GoogleCalendar(googleTokens(ctx.db, ctx.services), ctx.services.fetchImpl);
+};
+
+export const listCalendar = tool('list_calendar_events', 'low', 'chat', "Read this person's next Google Calendar events.", {
+  input: z.object({ max: z.number().int().min(1).max(10).default(5) }),
+  summarize: () => 'Show my next calendar events',
+  async run(ctx, a) {
+    const events = await calendar(ctx).listUpcoming(ctx.user.id, new Date(), a.max);
+    return { text: events.length ? events.map((e) => `- ${e.summary} (${e.start})`).join('\n') : 'Nothing coming up on your calendar.', data: { count: events.length } };
+  },
+  verify: async () => true,
+});
+
+export const addCalendarEvent = tool('add_calendar_event', 'medium', 'chat', 'Create a Google Calendar event. start and end are ISO 8601 date-times with offset.', {
+  input: z.object({ title: z.string().trim().min(1).max(120), start: z.iso.datetime({ offset: true }), end: z.iso.datetime({ offset: true }) }),
+  summarize: (a) => `Add to calendar: "${a.title}" ${a.start} to ${a.end}`,
+  async run(ctx, a) {
+    const ev = await calendar(ctx).createEvent(ctx.user.id, { summary: a.title, start: a.start, end: a.end });
+    await logActivity(ctx.db, ctx.member.familyId, ctx.member.id, 'calendar_event', `Added "${a.title}" to Google Calendar.`);
+    return { text: `Added "${a.title}" to your calendar.`, data: { eventId: ev.id } };
+  },
+  verify: async (ctx, r) => typeof r.data?.eventId === 'string' && calendar(ctx).eventExists(ctx.user.id, r.data.eventId),
+});
+
+export const addHouseItem = tool('add_house_item', 'low', 'edit_family_memory', 'Save House Knowledge: an appliance, inventory item, maintenance task or home fact.', {
+  input: z.object({
+    kind: z.enum(['appliance', 'inventory', 'maintenance', 'fact']),
+    name: z.string().trim().min(1).max(80),
+    details: z.string().trim().max(300).default(''),
+    dueAt: z.iso.datetime({ offset: true }).optional(),
+  }),
+  summarize: (a) => `Save to house (${a.kind}): ${a.name}`,
+  async run({ db, member }, a) {
+    const id = newId('hse');
+    await db.insert(schema.houseItems).values({ id, familyId: member.familyId, kind: a.kind, name: a.name, details: a.details, dueAt: a.dueAt ? new Date(a.dueAt) : null, createdBy: member.id });
+    await logActivity(db, member.familyId, member.id, 'house_item', `Saved ${a.kind}: ${a.name}.`);
+    return { text: `Saved to House Knowledge: ${a.name}.`, data: { id } };
+  },
+  verify: async ({ db }, r) => typeof r.data?.id === 'string' && (await db.select({ id: schema.houseItems.id }).from(schema.houseItems).where(eq(schema.houseItems.id, r.data.id))).length === 1,
+});
+
+export const listHouse = tool('list_house', 'low', 'chat', 'List House Knowledge items (appliances, inventory, maintenance, facts).', {
+  input: z.object({ kind: z.enum(['appliance', 'inventory', 'maintenance', 'fact']).optional() }),
+  summarize: () => 'Show house items',
+  async run({ db, member }, a) {
+    const rows = await db.select().from(schema.houseItems)
+      .where(and(eq(schema.houseItems.familyId, member.familyId), a.kind ? eq(schema.houseItems.kind, a.kind) : undefined)).limit(30);
+    return { text: rows.length ? rows.map((r) => `- ${r.name} (${r.kind})${r.details ? `: ${r.details}` : ''}`).join('\n') : 'Nothing saved about the house yet.', data: { count: rows.length } };
+  },
+  verify: async () => true,
+});
+
+export const TOOLS: readonly BrainTool[] = [
+  remember, recall, addExpense, moneySummary, addReminder, listReminders, callFamilyMember, sendMoney,
+  listCalendar, addCalendarEvent, addHouseItem, listHouse,
+] as BrainTool[];
 export const toolByName = (name: string): BrainTool | undefined => TOOLS.find((t) => t.spec.name === name);

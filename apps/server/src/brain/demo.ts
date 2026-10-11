@@ -37,6 +37,16 @@ export function planDemo(message: string): PlannedCall | null {
 
   if (/\b(my reminders|what are my reminders|show reminders|list reminders)\b/i.test(m)) return { tool: 'list_reminders', args: {} };
 
+  r = m.match(/^(?:add|save)\s+(?:an?\s+)?(appliance|inventory|maintenance|house fact|fact)[:\s]+([^,(]{1,80})(?:[,(]\s*([^)]{0,300}))?\)?$/i);
+  if (r) {
+    const kind = r[1]!.toLowerCase().replace('house fact', 'fact');
+    return { tool: 'add_house_item', args: { kind, name: r[2]!.trim(), details: (r[3] ?? '').trim() } };
+  }
+
+  if (/\b(what'?s in the house|house (?:list|items|knowledge)|show (?:the )?house)\b/i.test(m)) return { tool: 'list_house', args: {} };
+
+  if (/\b(what'?s on my calendar|my calendar|next events?|upcoming events?)\b/i.test(m)) return { tool: 'list_calendar_events', args: {} };
+
   r = m.match(/^(?:please\s+)?(?:call|phone|ring)\s+(.{1,60}?)[.!]?$/i);
   if (r) return { tool: 'call_family_member', args: { who: r[1]!.trim() } };
 

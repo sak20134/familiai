@@ -1,6 +1,6 @@
 // Password hashing, tokens and ids. Uses only Node's built-in crypto.
 
-import { createHash, randomBytes, randomUUID, scrypt as scryptCb, timingSafeEqual } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID, scrypt as scryptCb, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 
 const scrypt = promisify(scryptCb) as (pw: string, salt: Buffer, len: number, opts: object) => Promise<Buffer>;
@@ -91,4 +91,20 @@ export function defaultLimits(): Limits {
     signups: new RateLimiter(10, 60 * 60_000),
     inviteGuesses: new RateLimiter(10, 15 * 60_000),
   };
+}
+
+/** AES-256-GCM. Output: iv.tag.ciphertext (base64url). The key must be 32 bytes. */
+export function encrypt(plain: string, key: Buffer): string {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv('aes-256-gcm', key, iv);
+  const data = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]);
+  return [iv, cipher.getAuthTag(), data].map((b) => b.toString('base64url')).join('.');
+}
+
+export function decrypt(sealed: string, key: Buffer): string {
+  const [iv, tag, data] = sealed.split('.').map((p) => Buffer.from(p, 'base64url'));
+  if (!iv || !tag || !data) throw new Error('Corrupt encrypted value.');
+  const decipher = createDecipheriv('aes-256-gcm', key, iv);
+  decipher.setAuthTag(tag);
+  return Buffer.concat([decipher.update(data), decipher.final()]).toString('utf8');
 }

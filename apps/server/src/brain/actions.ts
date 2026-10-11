@@ -19,7 +19,7 @@ export type ToolOutcome =
 type ApprovalRow = typeof schema.approvals.$inferSelect;
 
 /** Run one tool call coming from the brain (model or demo). */
-export async function invokeTool(ctx: ToolContext, name: string, rawArgs: unknown, autonomy = NO_AUTONOMY): Promise<ToolOutcome> {
+export async function invokeTool(ctx: ToolContext, name: string, rawArgs: unknown, autonomy = ctx.autonomy ?? NO_AUTONOMY): Promise<ToolOutcome> {
   const tool = toolByName(name);
   if (!tool) return { kind: 'failed', tool: name, text: `Unknown tool "${name}".` };
   if (!can(asMember(ctx.member), tool.requires)) {

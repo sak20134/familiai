@@ -101,5 +101,41 @@ export function recordRoutes() {
     return c.json(rows.map((r) => ({ id: r.id, text: r.text, dueAt: r.dueAt })));
   });
 
+  app.get('/house', async (c) => {
+    const db = c.get('db');
+    const me = requireMember(c);
+    const rows = await db.select().from(schema.houseItems).where(eq(schema.houseItems.familyId, me.familyId)).orderBy(desc(schema.houseItems.createdAt));
+    return c.json(rows.map((r) => ({ id: r.id, kind: r.kind, name: r.name, details: r.details, dueAt: r.dueAt })));
+  });
+
+  /** Family Hub: one screen with money, approvals, reminders, house, check-ins and recent activity. */
+  app.get('/hub', async (c) => {
+    const db = c.get('db');
+    const me = requireMember(c);
+    const m = asMember(me);
+    const [ledger, pending, reminders, house, members, recent, plans] = await Promise.all([
+      can(m, 'view_money') ? db.select().from(schema.ledger).where(eq(schema.ledger.familyId, me.familyId)) : Promise.resolve(null),
+      db.select().from(schema.approvals).where(and(eq(schema.approvals.familyId, me.familyId), eq(schema.approvals.status, 'pending'))),
+      db.select().from(schema.reminders).where(and(eq(schema.reminders.memberId, me.id), eq(schema.reminders.done, false))),
+      db.select().from(schema.houseItems).where(eq(schema.houseItems.familyId, me.familyId)),
+      db.select({ id: schema.members.id }).from(schema.members).where(eq(schema.members.familyId, me.familyId)),
+      db.select().from(schema.activity).where(and(eq(schema.activity.familyId, me.familyId),
+        can(m, 'view_activity') ? undefined : eq(schema.activity.memberId, me.id))).orderBy(desc(schema.activity.createdAt)).limit(5),
+      db.select().from(schema.checkInPlans).where(eq(schema.checkInPlans.familyId, me.familyId)),
+    ]);
+    const mine = plans.find((p) => p.memberId === me.id);
+    return c.json({
+      moneyThisMonth: ledger ? summarize(ledger.map((r) => ({ ...r, memberId: r.memberId ?? '', at: r.at.getTime() })), 'month').totalMinor : null,
+      pendingApprovals: pending.filter((p) => p.requestedBy === me.id || m.role === 'owner' || m.role === 'admin' || (p.risk === 'money' && can(m, 'approve_money'))).length,
+      reminders: reminders.map((r) => r.text).slice(0, 5),
+      houseItems: house.length,
+      houseDue: house.filter((h) => h.dueAt && h.dueAt.getTime() < Date.now() + 7 * 24 * 3600_000).map((h) => h.name).slice(0, 5),
+      members: members.length,
+      checkInAlerts: can(m, 'manage_members') ? plans.filter((p) => p.missCount > 0).length : 0,
+      myCheckIn: mine ? { answeredToday: Boolean(mine.lastAnsweredAt && Date.now() - mine.lastAnsweredAt.getTime() < 20 * 3600_000) } : null,
+      recent: recent.map((r) => ({ summary: r.summary, createdAt: r.createdAt })),
+    });
+  });
+
   return app;
 }

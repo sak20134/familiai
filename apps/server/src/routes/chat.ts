@@ -9,15 +9,17 @@ import { decide, mayDecide, toRequest } from '../brain/actions';
 import { runTurn, type BrainConfig } from '../brain/agent';
 import type { ToolContext } from '../brain/tools';
 import { can } from '@familiai/core';
+import type { Services } from '../services/types';
 
-async function contextFor(db: Db, familyId: string, memberId: string): Promise<ToolContext | null> {
+async function contextFor(db: Db, familyId: string, memberId: string, services?: Services): Promise<ToolContext | null> {
   const member = await findMember(db, familyId, memberId);
   if (!member?.userId) return null;
   const [user] = await db.select().from(schema.users).where(eq(schema.users.id, member.userId));
-  return user ? { db, member, user } : null;
+  // Approved actions always run with full checks: AI Mode never applies at approval time.
+  return user ? { db, member, user, ...(services ? { services } : {}) } : null;
 }
 
-export function chatRoutes(brain: BrainConfig) {
+export function chatRoutes(brain: BrainConfig, services?: Services) {
   const app = new Hono<AppEnv>();
 
   app.get('/messages', async (c) => {
@@ -32,7 +34,9 @@ export function chatRoutes(brain: BrainConfig) {
     const me = requireMember(c);
     const input = await body(c, z.object({ message: z.string().trim().min(1).max(2000) }));
     try {
-      const result = await runTurn({ db: c.get('db'), member: me, user: c.get('user') }, input.message, brain);
+      const user = c.get('user');
+      const autonomy = { aiMode: user.aiMode && can(asMember(me), 'use_ai_mode'), standing: new Set<string>() };
+      const result = await runTurn({ db: c.get('db'), member: me, user, autonomy, ...(services ? { services } : {}) }, input.message, brain);
       return c.json(result);
     } catch (err) {
       return c.json({ error: err instanceof Error ? err.message : 'The AI could not answer.' }, 502);
@@ -42,7 +46,7 @@ export function chatRoutes(brain: BrainConfig) {
   return app;
 }
 
-export function approvalRoutes() {
+export function approvalRoutes(services?: Services) {
   const app = new Hono<AppEnv>();
 
   /** Requests this person may see: their own, plus ones they are allowed to decide. */
@@ -71,7 +75,7 @@ export function approvalRoutes() {
     app.post(`/:id/${decision}`, async (c) => {
       const db = c.get('db');
       const me = requireMember(c);
-      const out = await decide(db, me, c.req.param('id'), decision, (requesterId) => contextFor(db, me.familyId, requesterId));
+      const out = await decide(db, me, c.req.param('id'), decision, (requesterId) => contextFor(db, me.familyId, requesterId, services));
       if (!out.ok) fail(out.error === 'not_found' ? 404 : out.error === 'forbidden' ? 403 : 409, out.message);
       return c.json({ status: out.row.status, message: out.message });
     });

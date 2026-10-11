@@ -13,6 +13,10 @@ export const users = pgTable('users', {
   botLook: text('bot_look'), // big cat | small bot | girl | boy | ...
   botRole: text('bot_role'), // talking pet | mom | dad | friend | ...
   onboarded: boolean('onboarded').notNull().default(false),
+  /** AI Mode: the AI may do medium-risk work without asking. Money and high risk still always ask. */
+  aiMode: boolean('ai_mode').notNull().default(false),
+  /** Extra names the AI answers to (wake words), besides ai_name. */
+  aliases: jsonb('aliases').$type<string[]>().notNull().default([]),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -42,6 +46,7 @@ export const members = pgTable(
     userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
     role: text('role').notNull(), // owner | admin | adult | teen | child | elder | guest
     nickname: text('nickname'), // what the AI calls this person
+    phone: text('phone'), // E.164, used for calls and check-ins
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (t) => [uniqueIndex('members_family_user').on(t.familyId, t.userId), index('members_family').on(t.familyId)],
@@ -191,4 +196,31 @@ export const checkInPlans = pgTable('check_in_plans', {
   graceMinutes: integer('grace_minutes').notNull().default(30),
   enabled: boolean('enabled').notNull().default(true),
   lastAnsweredAt: timestamp('last_answered_at'),
+  /** The due time we last escalated for, so each miss is handled once. */
+  lastHandledDue: timestamp('last_handled_due'),
+  missCount: integer('miss_count').notNull().default(0),
+});
+
+/** House Knowledge: appliances, inventory, maintenance and home facts. */
+export const houseItems = pgTable(
+  'house_items',
+  {
+    id: text('id').primaryKey(),
+    familyId: text('family_id').notNull().references(() => families.id, { onDelete: 'cascade' }),
+    kind: text('kind').notNull(), // appliance | inventory | maintenance | fact
+    name: text('name').notNull(),
+    details: text('details').notNull().default(''),
+    dueAt: timestamp('due_at'),
+    createdBy: text('created_by').references(() => members.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [index('house_family').on(t.familyId)],
+);
+
+/** OAuth tokens for a connection, encrypted at rest (AES-256-GCM). */
+export const oauthTokens = pgTable('oauth_tokens', {
+  connectionId: text('connection_id').primaryKey().references(() => connections.id, { onDelete: 'cascade' }),
+  accessTokenEnc: text('access_token_enc').notNull(),
+  refreshTokenEnc: text('refresh_token_enc'),
+  expiresAt: timestamp('expires_at').notNull(),
 });

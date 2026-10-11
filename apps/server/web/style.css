@@ -130,6 +130,13 @@ select { width: auto; }
 .amt { text-align: right; font-variant-numeric: tabular-nums; }
 .cat { text-transform: capitalize; }
 
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+.tile { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 4px; }
+.tile-label { font-size: 13px; color: var(--muted); }
+.tile-value { font: 600 1.6rem var(--serif); }
+input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--gold); }
+.card.inline .field { margin-bottom: 10px; }
+
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 10px; z-index: 10; max-width: 90vw; }
 .toast.error { background: var(--bad); color: #fff; }
 
@@ -142,3 +149,4 @@ select { width: auto; }
   .feed li { grid-template-columns: 1fr; gap: 2px; }
   .bars li { grid-template-columns: 80px 1fr 80px; }
 }
+.row input[type="time"], .row select { width: auto; }

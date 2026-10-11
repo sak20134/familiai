@@ -10,7 +10,10 @@ interface Profile {
   botLook: string | null;
   botRole: string | null;
   onboarded: boolean;
-  member: { id: string; familyId: string; role: string; nickname: string | null } | null;
+  aiMode: boolean;
+  aliases: string[];
+  wakePhrases: string[];
+  member: { id: string; familyId: string; role: string; nickname: string | null; phone: string | null } | null;
 }
 
 interface Outcome {
@@ -60,7 +63,7 @@ async function api<T>(method: string, path: string, data?: unknown): Promise<T> 
 
 const state = {
   me: null as Profile | null,
-  view: 'chat' as 'chat' | 'approvals' | 'family' | 'memory' | 'activity' | 'money',
+  view: 'chat' as 'chat' | 'hub' | 'approvals' | 'family' | 'memory' | 'activity' | 'money' | 'settings',
 };
 
 async function loadMe(): Promise<Profile | null> {

@@ -6,13 +6,16 @@ import { secureHeaders } from 'hono/secure-headers';
 import type { AppEnv } from './context';
 import type { Db } from './db/client';
 import type { BrainConfig } from './brain/agent';
+import { randomBytes } from 'node:crypto';
 import { defaultLimits, type Limits } from './security';
+import type { Services } from './services/types';
+import { checkinRoutes, connectionRoutes, oauthRoutes } from './routes/settings';
 import { authRoutes, meRoutes, requireUser } from './routes/auth';
 import { approvalRoutes, chatRoutes } from './routes/chat';
 import { familyRoutes, inviteRoutes } from './routes/family';
 import { recordRoutes } from './routes/records';
 
-export function createApp(db: Db, brain: BrainConfig, limits: Limits = defaultLimits()) {
+export function createApp(db: Db, brain: BrainConfig, limits: Limits = defaultLimits(), services: Services = { secretKey: randomBytes(32) }) {
   const app = new Hono<AppEnv>();
 
   app.use('*', secureHeaders({
@@ -42,14 +45,18 @@ export function createApp(db: Db, brain: BrainConfig, limits: Limits = defaultLi
 
   const user = requireUser(db);
   for (const path of ['/api/me', '/api/me/*', '/api/family', '/api/family/*', '/api/invites/*', '/api/chat', '/api/chat/*',
-    '/api/approvals', '/api/approvals/*', '/api/records/*']) {
+    '/api/approvals', '/api/approvals/*', '/api/records/*', '/api/connections', '/api/connections/*', '/api/oauth/*',
+    '/api/checkins', '/api/checkins/*']) {
     app.use(path, user);
   }
   app.route('/api/me', meRoutes());
   app.route('/api/family', familyRoutes());
   app.route('/api/invites', inviteRoutes(limits));
-  app.route('/api/chat', chatRoutes(brain));
-  app.route('/api/approvals', approvalRoutes());
+  app.route('/api/chat', chatRoutes(brain, services));
+  app.route('/api/approvals', approvalRoutes(services));
+  app.route('/api/connections', connectionRoutes(services));
+  app.route('/api/oauth', oauthRoutes(services));
+  app.route('/api/checkins', checkinRoutes());
   app.route('/api/records', recordRoutes());
 
   app.notFound((c) => (c.req.path.startsWith('/api/') ? c.json({ error: 'Not found.' }, 404) : c.text('Not found', 404)));

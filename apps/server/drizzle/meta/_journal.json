@@ -15,6 +15,13 @@
       "when": 1791721430112,
       "tag": "0001_member_delete_rules",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791730263908,
+      "tag": "0002_batch2",
+      "breakpoints": true
     }
   ]
 }

@@ -26,6 +26,15 @@ For full conversations:
 2. Put your Anthropic key after `ANTHROPIC_API_KEY=`.
 3. Restart. Never share the `.env` file.
 
+## Optional: phone calls and Google Calendar
+
+Add these to `apps/server/.env` (see `.env.example`), then restart:
+
+- **Phone calls and check-in calls:** `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM` (a Twilio number). Each person adds their phone in Settings.
+- **Google Calendar:** create an OAuth client (type: Web) in Google Cloud Console, set its redirect URL to `http://localhost:8787/api/oauth/google/callback`, then add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. Each person connects their own Google account in Settings.
+
+Without these, calls and calendar say "not connected" instead of pretending.
+
 ## What is protected
 
 - Risky actions wait for approval. Money always needs an adult or admin, every time.

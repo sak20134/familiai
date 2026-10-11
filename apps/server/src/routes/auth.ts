@@ -1,12 +1,12 @@
 // Sign up, log in, log out, and the current user's profile and onboarding answers.
 
-import { ageModeFor } from '@familiai/core';
+import { ageModeFor, can, wakePhrases } from '@familiai/core';
 import { and, eq, gt } from 'drizzle-orm';
 import { Hono, type MiddlewareHandler } from 'hono';
 import { getConnInfo } from '@hono/node-server/conninfo';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import { z } from 'zod';
-import { body, fail, type AppEnv, type Ctx } from '../context';
+import { asMember, body, fail, type AppEnv, type Ctx } from '../context';
 import { schema, type Db } from '../db/client';
 import { hashPassword, newId, newToken, sha256, verifyPassword, type Limits } from '../security';
 
@@ -69,7 +69,10 @@ export function profile(user: typeof schema.users.$inferSelect, member: typeof s
     botLook: user.botLook,
     botRole: user.botRole,
     onboarded: user.onboarded,
-    member: member && { id: member.id, familyId: member.familyId, role: member.role, nickname: member.nickname },
+    aiMode: user.aiMode,
+    aliases: user.aliases,
+    wakePhrases: wakePhrases([user.aiName ?? 'Buddy', ...user.aliases]),
+    member: member && { id: member.id, familyId: member.familyId, role: member.role, nickname: member.nickname, phone: member.phone },
   };
 }
 
@@ -136,17 +139,24 @@ export function meRoutes() {
         botLook: z.string().trim().min(1).max(40).optional(),
         botRole: z.string().trim().min(1).max(40).optional(),
         nickname: z.string().trim().min(1).max(40).optional(),
+        phone: z.string().trim().regex(/^\+[1-9]\d{6,14}$/, 'Use international format, e.g. +919876543210').optional(),
+        aiMode: z.boolean().optional(),
+        aliases: z.array(z.string().trim().min(1).max(30)).max(5).optional(),
         onboarded: z.literal(true).optional(),
       }),
     );
-    const { nickname, ...userFields } = input;
+    const { nickname, phone, ...userFields } = input;
     const user = c.get('user');
+    const current = c.get('member');
+    if (input.aiMode === true && !(current && can(asMember(current), 'use_ai_mode'))) {
+      fail(403, 'Your family role cannot turn on AI Mode.');
+    }
     if (Object.keys(userFields).length > 0) {
       await db.update(schema.users).set(userFields).where(eq(schema.users.id, user.id));
     }
     const member = c.get('member');
-    if (nickname && member) {
-      await db.update(schema.members).set({ nickname }).where(eq(schema.members.id, member.id));
+    if ((nickname || phone) && member) {
+      await db.update(schema.members).set({ ...(nickname ? { nickname } : {}), ...(phone ? { phone } : {}) }).where(eq(schema.members.id, member.id));
     }
     const [fresh] = await db.select().from(schema.users).where(eq(schema.users.id, user.id));
     const [freshMember] = await db.select().from(schema.members).where(eq(schema.members.userId, user.id)).limit(1);
