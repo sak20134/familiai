@@ -209,3 +209,136 @@
 | App UI / accessibility / animation | https://github.com/software-mansion/react-native-gesture-handler | 123 | 2026-10-09 |
 | App UI / accessibility / animation | https://github.com/tamagui/tamagui | 319 | 2026-10-06 |
 | App UI / accessibility / animation | https://github.com/wix/react-native-ui-lib | 296 | 2026-09-06 |
+
+# Third batch: 126 repos for the remaining steps, any language (Oct 11 2026)
+
+How to read "Plan": TypeScript/JavaScript repos can be used as-is. Other languages get rewritten in TypeScript. GPL/AGPL repos are for ideas only.
+
+| Step | Repo | Language | License | Plan |
+|---|---|---|---|---|
+| 06-permissions | https://github.com/authzed/spicedb | Go | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 06-permissions | https://github.com/casbin/casbin | Go | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 06-permissions | https://github.com/casbin/node-casbin | TypeScript | Apache-2.0 | Use directly (npm package or copy with license notice) |
+| 06-permissions | https://github.com/cerbos/cerbos | Go | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 06-permissions | https://github.com/deadbits/vigil-llm | Python | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 06-permissions | https://github.com/open-policy-agent/opa | Go | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 06-permissions | https://github.com/openfga/js-sdk | TypeScript | Apache-2.0 | Use directly (npm package or copy with license notice) |
+| 06-permissions | https://github.com/openfga/openfga | Go | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 06-permissions | https://github.com/ory/keto | Go | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 06-permissions | https://github.com/protectai/rebuff | TypeScript | Apache-2.0 | Use directly (npm package or copy with license notice) |
+| 12-result-check | https://github.com/confident-ai/deepeval | Python | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 12-result-check | https://github.com/explodinggradients/ragas | Python | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 12-result-check | https://github.com/openai/evals | Python | MIT | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 12-result-check | https://github.com/promptfoo/promptfoo | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 12-result-check | https://github.com/UKGovernmentBEIS/inspect_ai | Python | MIT | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 13-14-onboarding | https://github.com/FaridSafi/react-native-gifted-chat | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 13-14-onboarding | https://github.com/formbricks/formbricks | TypeScript | AGPL | Ideas only: read it, write our own (copying would force our code under AGPL) |
+| 13-14-onboarding | https://github.com/jfilter/react-native-onboarding-swiper | JavaScript | MIT | Use directly (npm package or copy with license notice) |
+| 13-14-onboarding | https://github.com/kirillzyusko/react-native-keyboard-controller | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 13-14-onboarding | https://github.com/Shopify/flash-list | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 17-18-activity-vault | https://github.com/pgaudit/pgaudit | C | other | Check the license before reusing code |
+| 17-18-activity-vault | https://github.com/retracedhq/retraced | TypeScript | Apache-2.0 | Use directly (npm package or copy with license notice) |
+| 17-18-activity-vault | https://github.com/supabase/supa_audit | Mixed | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 19-calendar-contacts | https://github.com/jkbrzt/rrule | TypeScript | BSD | Use directly (npm package or copy with license notice) |
+| 19-calendar-contacts | https://github.com/kewisch/ical.js | JavaScript | MPL-2.0 | Use directly (npm package or copy with license notice) |
+| 19-calendar-contacts | https://github.com/Kozea/Radicale | Python | GPL | Ideas only: read it, write our own (copying would force our code under GPL) |
+| 19-calendar-contacts | https://github.com/sabre-io/dav | PHP | BSD | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 20-messaging | https://github.com/grammyjs/grammY | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 20-messaging | https://github.com/pedroslopez/whatsapp-web.js | JavaScript | Apache-2.0 | Use directly (npm package or copy with license notice) |
+| 20-messaging | https://github.com/telegraf/telegraf | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 20-messaging | https://github.com/WhiskeySockets/Baileys | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 22-home | https://github.com/homebridge/homebridge | TypeScript | Apache-2.0 | Use directly (npm package or copy with license notice) |
+| 22-home | https://github.com/Koenkk/zigbee-herdsman | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 22-home | https://github.com/openhab/openhab-core | Java | other | Check the license before reusing code |
+| 22-money | https://github.com/akaunting/akaunting | PHP | BUSL | Check the license before reusing code |
+| 22-money | https://github.com/beancount/beancount | Python | GPL | Ideas only: read it, write our own (copying would force our code under GPL) |
+| 22-money | https://github.com/ghostfolio/ghostfolio | TypeScript | AGPL | Ideas only: read it, write our own (copying would force our code under AGPL) |
+| 22-money | https://github.com/mindee/doctr | Python | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 22-money | https://github.com/naptha/tesseract.js | JavaScript | Apache-2.0 | Use directly (npm package or copy with license notice) |
+| 22-money | https://github.com/simonmichael/hledger | Haskell | GPL | Ideas only: read it, write our own (copying would force our code under GPL) |
+| 23-emotion | https://github.com/audeering/opensmile | C++ | other | Check the license before reusing code |
+| 23-emotion | https://github.com/FunAudioLLM/SenseVoice | Python | MIT | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 23-voice-assistants | https://github.com/alphacep/vosk-android-demo | Java | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 23-voice-assistants | https://github.com/alphacep/vosk-api | Kotlin | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 23-voice-assistants | https://github.com/kalliope-project/kalliope | Python | GPL | Ideas only: read it, write our own (copying would force our code under GPL) |
+| 23-voice-assistants | https://github.com/leon-ai/leon | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 23-voice-assistants | https://github.com/MycroftAI/mycroft-core | Python | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 23-voice-assistants | https://github.com/openai/openai-realtime-agents | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 23-voice-assistants | https://github.com/openai/openai-realtime-console | JavaScript | MIT | Use directly (npm package or copy with license notice) |
+| 23-voice-assistants | https://github.com/OpenVoiceOS/ovos-core | Python | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 23-voice-assistants | https://github.com/react-native-webrtc/react-native-webrtc | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 23-voice-assistants | https://github.com/rhasspy/wyoming | Python | MIT | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 23-voice-assistants | https://github.com/rhasspy/wyoming-satellite | Python | MIT | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 23-voice-assistants | https://github.com/SEPIA-Framework/sepia-assist-server | Java | MIT | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 23-voice-assistants | https://github.com/Stypox/dicio-android | Kotlin | GPL | Ideas only: read it, write our own (copying would force our code under GPL) |
+| 25-26-calls-alerts | https://github.com/agenda/agenda | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 25-26-calls-alerts | https://github.com/expo/expo-server-sdk-node | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 25-26-calls-alerts | https://github.com/Freika/dawarich | Ruby | AGPL | Ideas only: read it, write our own (copying would force our code under AGPL) |
+| 25-26-calls-alerts | https://github.com/gotify/server | Go | MIT | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 25-26-calls-alerts | https://github.com/livekit-examples/outbound-caller-python | Python | MIT | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 25-26-calls-alerts | https://github.com/medic/cht-core | JavaScript | AGPL | Ideas only: read it, write our own (copying would force our code under AGPL) |
+| 25-26-calls-alerts | https://github.com/novuhq/novu | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 25-26-calls-alerts | https://github.com/permissionlesstech/bitchat | Swift | other | Check the license before reusing code |
+| 25-26-calls-alerts | https://github.com/taskforcesh/bullmq | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 25-26-calls-alerts | https://github.com/triggerdotdev/trigger.dev | TypeScript | Apache-2.0 | Use directly (npm package or copy with license notice) |
+| 25-26-calls-alerts | https://github.com/twilio-labs/call-gpt | JavaScript | MIT | Use directly (npm package or copy with license notice) |
+| 27-ai-mode | https://github.com/geekan/MetaGPT | Python | MIT | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 27-ai-mode | https://github.com/microsoft/TaskWeaver | Python | MIT | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 27-ai-mode | https://github.com/OpenBMB/XAgent | Python | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 27-ai-mode | https://github.com/reworkd/AgentGPT | TypeScript | GPL | Ideas only: read it, write our own (copying would force our code under GPL) |
+| 27-ai-mode | https://github.com/TransformerOptimus/SuperAGI | Python | MIT | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 27-ai-mode | https://github.com/yoheinakajima/babyagi | Python | none-found | Check the license before reusing code |
+| 28-coder | https://github.com/ErikBjare/gptme | Python | MIT | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 28-coder | https://github.com/google-gemini/gemini-cli | TypeScript | Apache-2.0 | Use directly (npm package or copy with license notice) |
+| 28-coder | https://github.com/openai/codex | Rust | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 28-coder | https://github.com/plandex-ai/plandex | Go | MIT | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 28-coder | https://github.com/smol-ai/developer | Python | MIT | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 28-coder | https://github.com/sst/opencode | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 28-coder | https://github.com/SWE-agent/SWE-agent | Python | MIT | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 29-twin-memory | https://github.com/a16z-infra/ai-town | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 29-twin-memory | https://github.com/basicmachines-co/basic-memory | Python | AGPL | Ideas only: read it, write our own (copying would force our code under AGPL) |
+| 29-twin-memory | https://github.com/camel-ai/camel | Python | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 29-twin-memory | https://github.com/donatso/family-chart | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 29-twin-memory | https://github.com/getzep/zep | Python | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 29-twin-memory | https://github.com/gramps-project/gramps | Python | GPL | Ideas only: read it, write our own (copying would force our code under GPL) |
+| 29-twin-memory | https://github.com/photoview/photoview | TypeScript | AGPL | Ideas only: read it, write our own (copying would force our code under AGPL) |
+| 29-twin-memory | https://github.com/SillyTavern/SillyTavern | JavaScript | AGPL | Ideas only: read it, write our own (copying would force our code under AGPL) |
+| 29-twin-memory | https://github.com/supermemoryai/supermemory | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 29-twin-memory | https://github.com/webtrees/webtrees | JavaScript | none-found | Check the license before reusing code |
+| 30-desktop-bot | https://github.com/Adrianotiger/desktopPet | JavaScript | none-found | Check the license before reusing code |
+| 30-desktop-bot | https://github.com/danielgatis/rembg | Python | MIT | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 30-desktop-bot | https://github.com/electron-userland/electron-builder | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 30-desktop-bot | https://github.com/electron/forge | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 30-desktop-bot | https://github.com/imgly/background-removal-js | TypeScript | other | Check the license before reusing code |
+| 30-desktop-bot | https://github.com/pixiv/ChatVRM | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 30-desktop-takeover | https://github.com/anthropics/anthropic-quickstarts | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 30-desktop-takeover | https://github.com/asweigart/pyautogui | Python | BSD | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 30-desktop-takeover | https://github.com/e2b-dev/open-computer-use | Python | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 30-desktop-takeover | https://github.com/microsoft/OmniParser | Python | other | Check the license before reusing code |
+| 30-desktop-takeover | https://github.com/nut-tree/nut.js | TypeScript | none-found | Check the license before reusing code |
+| 30-desktop-takeover | https://github.com/octalmage/robotjs | C | MIT | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 30-desktop-takeover | https://github.com/OthersideAI/self-operating-computer | Python | MIT | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 30-desktop-takeover | https://github.com/pywinauto/pywinauto | Python | BSD | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 30-desktop-takeover | https://github.com/showlab/ShowUI | Python | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 30-globe-3d | https://github.com/pmndrs/drei | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 30-globe-3d | https://github.com/pmndrs/postprocessing | JavaScript | other | Check the license before reusing code |
+| 30-globe-3d | https://github.com/readyplayerme/visage | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 31-tv | https://github.com/android/tv-samples | Kotlin | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 31-tv | https://github.com/bamlab/react-tv-space-navigation | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 31-tv | https://github.com/googlecast/CastVideos-android | Java | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 31-tv | https://github.com/NoriginMedia/Norigin-Spatial-Navigation | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 31-tv | https://github.com/soldair/node-qrcode | JavaScript | none-found | Check the license before reusing code |
+| 31-tv | https://github.com/Stremio/stremio-web | TypeScript | GPL | Ideas only: read it, write our own (copying would force our code under GPL) |
+| 31-tv | https://github.com/zxing/zxing | Java | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 32-auth | https://github.com/logto-io/logto | TypeScript | MPL-2.0 | Use directly (npm package or copy with license notice) |
+| 32-auth | https://github.com/supertokens/supertokens-core | Java | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 32-auth | https://github.com/zitadel/zitadel | Go | AGPL | Ideas only: read it, write our own (copying would force our code under AGPL) |
+| 32-kids-learning | https://github.com/KDE/gcompris | JavaScript | none-found | Check the license before reusing code |
+| 32-kids-learning | https://github.com/learningequality/kolibri | Python | MIT | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 32-kids-learning | https://github.com/oppia/oppia-android | Kotlin | Apache-2.0 | Rewrite in TypeScript (port the logic, keep the license notice) |
+| 32-kids-safety | https://github.com/infinitered/nsfwjs | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 32-kids-safety | https://github.com/notAI-tech/NudeNet | Python | AGPL | Ideas only: read it, write our own (copying would force our code under AGPL) |
+| 32-on-device-ai | https://github.com/a-ghorbani/pocketpal-ai | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 32-on-device-ai | https://github.com/dabit3/react-native-ai | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 32-on-device-ai | https://github.com/Mobile-Artificial-Intelligence/maid | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+| 32-on-device-ai | https://github.com/mybigday/llama.rn | TypeScript | MIT | Use directly (npm package or copy with license notice) |
