@@ -1,0 +1,28 @@
+{
+  "name": "@familiai/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npm run build:web && tsx watch src/index.ts",
+    "start": "npm run build:web && tsx src/index.ts",
+    "build:web": "tsc -p tsconfig.web.json && node scripts/copy-web.mjs",
+    "db:generate": "drizzle-kit generate",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.web.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@hono/node-server": "^2.1.4",
+    "drizzle-orm": "^0.45.4",
+    "hono": "^4.13.13",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "drizzle-kit": "^0.31.11",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3"
+  }
+}

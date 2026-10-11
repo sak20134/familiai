@@ -6,11 +6,27 @@ import { bigint, boolean, index, integer, jsonb, pgTable, real, text, timestamp,
 export const users = pgTable('users', {
   id: text('id').primaryKey(),
   email: text('email').notNull().unique(),
+  passwordHash: text('password_hash').notNull(),
   displayName: text('display_name'),
   aiName: text('ai_name'), // what this user calls the AI
   birthYear: integer('birth_year'),
+  botLook: text('bot_look'), // big cat | small bot | girl | boy | ...
+  botRole: text('bot_role'), // talking pet | mom | dad | friend | ...
+  onboarded: boolean('onboarded').notNull().default(false),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
+
+/** Login sessions. Only a SHA-256 hash of the cookie token is stored, never the token itself. */
+export const sessions = pgTable(
+  'sessions',
+  {
+    tokenHash: text('token_hash').primaryKey(),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    expiresAt: timestamp('expires_at').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [index('sessions_user').on(t.userId)],
+);
 
 export const families = pgTable('families', {
   id: text('id').primaryKey(),
@@ -61,18 +77,49 @@ export const memories = pgTable(
   (t) => [index('memories_family_scope').on(t.familyId, t.scope)],
 );
 
-export const approvals = pgTable('approvals', {
-  id: text('id').primaryKey(),
+export const invites = pgTable('invites', {
+  code: text('code').primaryKey(),
   familyId: text('family_id').notNull().references(() => families.id, { onDelete: 'cascade' }),
-  requestedBy: text('requested_by').notNull().references(() => members.id),
-  decidedBy: text('decided_by').references(() => members.id),
-  tool: text('tool').notNull(),
-  risk: text('risk').notNull(),
-  args: jsonb('args').notNull(),
-  status: text('status').notNull().default('pending'),
-  error: text('error'),
+  role: text('role').notNull(),
+  createdBy: text('created_by').notNull().references(() => members.id, { onDelete: 'cascade' }),
+  usedBy: text('used_by').references(() => users.id, { onDelete: 'set null' }),
+  expiresAt: timestamp('expires_at').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
+
+export const approvals = pgTable(
+  'approvals',
+  {
+    id: text('id').primaryKey(),
+    familyId: text('family_id').notNull().references(() => families.id, { onDelete: 'cascade' }),
+    requestedBy: text('requested_by').notNull().references(() => members.id, { onDelete: 'cascade' }),
+    decidedBy: text('decided_by').references(() => members.id, { onDelete: 'set null' }),
+    tool: text('tool').notNull(),
+    risk: text('risk').notNull(),
+    summary: text('summary').notNull(),
+    args: jsonb('args').notNull(),
+    status: text('status').notNull().default('pending'),
+    result: jsonb('result'),
+    error: text('error'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    decidedAt: timestamp('decided_at'),
+  },
+  (t) => [index('approvals_family_status').on(t.familyId, t.status)],
+);
+
+export const reminders = pgTable(
+  'reminders',
+  {
+    id: text('id').primaryKey(),
+    familyId: text('family_id').notNull().references(() => families.id, { onDelete: 'cascade' }),
+    memberId: text('member_id').notNull().references(() => members.id, { onDelete: 'cascade' }),
+    text: text('text').notNull(),
+    dueAt: timestamp('due_at'),
+    done: boolean('done').notNull().default(false),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [index('reminders_member').on(t.memberId)],
+);
 
 /** Every action, for the family activity feed. */
 export const activity = pgTable(
@@ -102,7 +149,7 @@ export const vaultItems = pgTable('vault_items', {
 export const vaultAccess = pgTable('vault_access', {
   id: text('id').primaryKey(),
   familyId: text('family_id').notNull().references(() => families.id, { onDelete: 'cascade' }),
-  viewerId: text('viewer_id').notNull().references(() => members.id),
+  viewerId: text('viewer_id').notNull().references(() => members.id, { onDelete: 'cascade' }),
   itemId: text('item_id').notNull().references(() => vaultItems.id, { onDelete: 'cascade' }),
   viewedAt: timestamp('viewed_at').defaultNow().notNull(),
 });
@@ -123,7 +170,8 @@ export const ledger = pgTable(
   {
     id: text('id').primaryKey(),
     familyId: text('family_id').notNull().references(() => families.id, { onDelete: 'cascade' }),
-    memberId: text('member_id').notNull().references(() => members.id),
+    // Kept when a member leaves (family history stays), but no longer linked to them.
+    memberId: text('member_id').references(() => members.id, { onDelete: 'set null' }),
     amountMinor: bigint('amount_minor', { mode: 'number' }).notNull(),
     currency: text('currency').notNull(),
     category: text('category').notNull(),

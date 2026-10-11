@@ -13,7 +13,9 @@ export type Capability =
   | 'edit_family_memory'
   | 'use_calls'
   | 'connect_services'
-  | 'manage_safe_search';
+  | 'manage_safe_search'
+  | 'log_expenses'
+  | 'view_money';
 
 const ALL: Capability[] = [
   'chat',
@@ -26,6 +28,8 @@ const ALL: Capability[] = [
   'use_calls',
   'connect_services',
   'manage_safe_search',
+  'log_expenses',
+  'view_money',
 ];
 
 const CAPABILITIES: Record<Role, ReadonlySet<Capability>> = {
@@ -39,10 +43,12 @@ const CAPABILITIES: Record<Role, ReadonlySet<Capability>> = {
     'edit_family_memory',
     'use_calls',
     'connect_services',
+    'log_expenses',
+    'view_money',
   ]),
-  teen: new Set<Capability>(['chat', 'edit_family_memory', 'use_calls']),
+  teen: new Set<Capability>(['chat', 'edit_family_memory', 'use_calls', 'log_expenses']),
   child: new Set<Capability>(['chat']),
-  elder: new Set<Capability>(['chat', 'use_calls', 'edit_family_memory', 'use_ai_mode']),
+  elder: new Set<Capability>(['chat', 'use_calls', 'edit_family_memory', 'use_ai_mode', 'log_expenses', 'view_money']),
   guest: new Set<Capability>(['chat']),
 };
 

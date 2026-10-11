@@ -1,0 +1,12 @@
+{
+  "name": "familiai",
+  "private": true,
+  "description": "Family AI monorepo",
+  "workspaces": ["packages/core", "apps/server"],
+  "scripts": {
+    "dev": "npm run dev -w @familiai/server",
+    "start": "npm run start -w @familiai/server",
+    "test": "npm test -w @familiai/core && npm test -w @familiai/server",
+    "typecheck": "npm run typecheck -w @familiai/core && npm run typecheck -w @familiai/server"
+  }
+}
