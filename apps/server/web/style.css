@@ -150,3 +150,74 @@ input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--gold); }
   .bars li { grid-template-columns: 80px 1fr 80px; }
 }
 .row input[type="time"], .row select { width: auto; }
+
+/* ---- Voice mode: the golden glowing globe ---- */
+/* A dark stage, in both themes, so the gold actually glows. */
+.voice {
+  --text: #f4eee2; --muted: #a79d8c; --line: #332e26; --card: #1a1813;
+  min-height: 100%; color: var(--text); text-align: center;
+  background: radial-gradient(120% 90% at 50% 18%, #26211a 0%, #141210 55%, #0b0a09 100%);
+}
+.voice > * { max-width: 640px; margin-left: auto; margin-right: auto; }
+.voice { padding: 28px 16px 48px; display: grid; gap: 14px; align-content: start; }
+.voice input { background: #1a1813; border-color: var(--line); color: var(--text); }
+.voice input::placeholder { color: var(--muted); }
+.globe-stage { display: grid; place-items: center; min-height: 260px; }
+.globe {
+  position: relative; width: 200px; height: 200px; border-radius: 50%; border: 0; padding: 0; cursor: pointer;
+  background:
+    radial-gradient(circle at 32% 26%, #fffbe8 0%, #ffe9a8 18%, #f0bf52 42%, #b9811a 72%, #6d4708 100%);
+  box-shadow: 0 0 60px 10px rgba(233, 185, 73, .35), inset -14px -18px 40px rgba(88, 56, 4, .45), inset 10px 12px 30px rgba(255, 249, 221, .5);
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.globe:hover { transform: scale(1.03); }
+.globe-core, .globe-ring { position: absolute; inset: 0; border-radius: 50%; pointer-events: none; }
+.globe-core {
+  background: conic-gradient(from 0deg, rgba(255, 255, 255, .34), rgba(255, 255, 255, 0) 28%, rgba(255, 214, 120, .36) 54%, rgba(255, 255, 255, 0) 78%, rgba(255, 255, 255, .34));
+  mix-blend-mode: screen; animation: globe-spin 14s linear infinite;
+}
+.globe-ring { inset: -18px; border: 1px solid rgba(233, 185, 73, .45); animation: globe-pulse 3.6s ease-in-out infinite; }
+.globe[data-state="listening"] { box-shadow: 0 0 90px 18px rgba(233, 185, 73, .55), inset -14px -18px 40px rgba(88, 56, 4, .4), inset 10px 12px 30px rgba(255, 249, 221, .6); }
+.globe[data-state="listening"] .globe-ring { animation-duration: 1.2s; }
+.globe[data-state="thinking"] .globe-core { animation-duration: 3s; }
+.globe[data-state="speaking"] .globe-ring { animation-duration: .9s; border-color: rgba(255, 236, 180, .8); }
+@keyframes globe-spin { to { transform: rotate(360deg); } }
+@keyframes globe-pulse { 0%, 100% { transform: scale(1); opacity: .65; } 50% { transform: scale(1.09); opacity: .2; } }
+@media (prefers-reduced-motion: reduce) {
+  .globe-core, .globe-ring { animation: none; }
+  .globe { transition: none; }
+}
+.voice-state { font-size: 14px; color: var(--muted); margin: 0; }
+.voice-said { margin: 0; color: var(--muted); }
+.voice-reply { font: 17px/1.6 var(--serif); margin: 0; min-height: 1.6em; }
+.voice-hands, .voice-type { justify-content: center; }
+.voice-history { display: grid; gap: 8px; margin-top: 10px; text-align: left; }
+.voice-turn { display: grid; gap: 2px; border-top: 1px solid var(--line); padding-top: 8px; font-size: 14px; }
+
+/* ---- Coder mode: dark workspace, in both themes ---- */
+.coder { --card: #14161a; --bg: #0e1013; --text: #e6e8ea; --line: #262b32; --user: #1b2027; --muted: #98a0aa;
+  background: var(--bg); color: var(--text); height: 100%; }
+.coder .msg.assistant .body { font: 14px/1.6 ui-monospace, Menlo, Consolas, monospace; }
+.coder .hello h1 { color: var(--text); }
+.codeblock { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin: 10px 0; background: #0b0d10; }
+.codebar { display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; border-bottom: 1px solid var(--line); font-size: 12px; }
+.codeblock pre { margin: 0; padding: 12px; overflow-x: auto; }
+.codeblock code { font: 13px/1.55 ui-monospace, Menlo, Consolas, monospace; white-space: pre; }
+
+/* ---- Learn and Twin ---- */
+.learn, .twin { display: flex; flex-direction: column; height: 100%; }
+.learn-top, .twin-head { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 16px; border-bottom: 1px solid var(--line); }
+.twin-head { display: grid; gap: 6px; padding-bottom: 12px; }
+.twin-head h1 { margin: 0; }
+.twin-panel { flex: 1; min-height: 0; }
+.learn .chat, .twin-panel .chat { height: 100%; }
+
+/* ---- Family Memory Timeline ---- */
+.tl-month { margin-top: 24px; }
+.tl { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.tl-item { display: flex; gap: 10px; align-items: baseline; border-left: 3px solid var(--line); padding: 6px 10px; background: var(--card); border-radius: 0 10px 10px 0; }
+.tl-item time { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.tl-item.kind-memory { border-left-color: var(--gold); }
+.tl-item.kind-money { border-left-color: var(--money); }
+.tl-item.kind-learning { border-left-color: var(--ok); }
+.tl-item.kind-moment { border-left-color: var(--bad); }

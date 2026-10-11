@@ -11,6 +11,7 @@ interface Profile {
   botRole: string | null;
   onboarded: boolean;
   aiMode: boolean;
+  twinOptIn: boolean;
   aliases: string[];
   wakePhrases: string[];
   member: { id: string; familyId: string; role: string; nickname: string | null; phone: string | null } | null;
@@ -61,10 +62,27 @@ async function api<T>(method: string, path: string, data?: unknown): Promise<T> 
   return json as T;
 }
 
+type View = 'chat' | 'voice' | 'coder' | 'learn' | 'twin' | 'hub' | 'timeline' | 'approvals' | 'family' | 'memory' | 'activity' | 'money' | 'settings';
+
 const state = {
   me: null as Profile | null,
-  view: 'chat' as 'chat' | 'hub' | 'approvals' | 'family' | 'memory' | 'activity' | 'money' | 'settings',
+  view: 'chat' as View,
 };
+
+interface TurnReply {
+  reply: string;
+  outcomes: Outcome[];
+  demo: boolean;
+}
+
+/** One chat turn in any of the five modes. */
+function sendTurn(message: string, mode: string, twinOf?: string): Promise<TurnReply> {
+  return api<TurnReply>('POST', '/chat', { message, mode, ...(twinOf ? { twinOf } : {}) });
+}
+
+function loadThread(mode: string): Promise<Array<{ role: string; content: string }>> {
+  return api<Array<{ role: string; content: string }>>('GET', `/chat/messages?mode=${mode}`);
+}
 
 async function loadMe(): Promise<Profile | null> {
   try {

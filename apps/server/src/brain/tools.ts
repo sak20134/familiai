@@ -11,6 +11,7 @@ import {
   resolveContact,
   summarize,
   type MemoryItem,
+  type Mode,
   type Risk,
   type ToolSpec,
 } from '@familiai/core';
@@ -29,6 +30,10 @@ export interface ToolContext {
   /** AI Mode and standing permissions for this person (default: none). */
   autonomy?: Autonomy;
   services?: Services;
+  /** Which of the five modes this turn is in (default: chat). Modes can only remove tools. */
+  mode?: Mode;
+  /** Family Twin: the member whose shared notes this turn is guessing from. */
+  twin?: { name: string; facts: readonly string[] };
 }
 
 export interface ToolResult {

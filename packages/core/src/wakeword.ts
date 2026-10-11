@@ -38,6 +38,25 @@ export class WakeGate {
   }
 }
 
+/**
+ * Removes the wake phrase from what was heard, so the AI gets the request only.
+ * Returns null when no wake phrase was said (hands-free listening should ignore it).
+ */
+export function stripWake(heard: string, phrases: readonly string[]): string | null {
+  const text = heard.trim();
+  const lower = text.toLowerCase();
+  let best: { at: number; len: number } | null = null;
+  for (const phrase of phrases) {
+    const p = phrase.trim().toLowerCase();
+    if (!p) continue;
+    const at = lower.indexOf(p);
+    if (at !== -1 && (best === null || at < best.at)) best = { at, len: p.length };
+  }
+  if (best === null) return null;
+  const rest = text.slice(best.at + best.len).replace(/^[\s,.!?:;-]+/, '').trim();
+  return rest.length > 0 ? rest : null;
+}
+
 /** Phrases to listen for, built from the names the user chose ("Hey Nova"). */
 export function wakePhrases(aiNames: readonly string[]): string[] {
   const out = new Set<string>();

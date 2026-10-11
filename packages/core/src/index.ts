@@ -8,3 +8,5 @@ export * from './checkins';
 export * from './google';
 export * from './wakeword';
 export * from './tvFocus';
+export * from './modes';
+export * from './timeline';

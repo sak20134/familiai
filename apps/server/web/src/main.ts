@@ -1,8 +1,9 @@
 // The app shell: sidebar + Claude-style chat, approvals, family, memory, activity and money views.
 
 const NAV: Array<[typeof state.view, string]> = [
-  ['chat', 'Chat'], ['hub', 'Hub'], ['approvals', 'Approvals'], ['family', 'Family'], ['memory', 'Memory'], ['activity', 'Activity'],
-  ['money', 'Money'], ['settings', 'Settings'],
+  ['chat', 'Chat'], ['voice', 'Voice'], ['coder', 'Coder'], ['learn', 'Learn'],
+  ['hub', 'Hub'], ['timeline', 'Timeline'], ['twin', 'Twin'], ['approvals', 'Approvals'],
+  ['family', 'Family'], ['memory', 'Memory'], ['money', 'Money'], ['settings', 'Settings'],
 ];
 
 function approvalCard(a: { id: string; summary: string; risk: string; status: string; canDecide: boolean; error?: string | null }, onChange?: () => void): HTMLElement {
@@ -188,7 +189,11 @@ function shell(): void {
     h('aside', { class: 'sidebar' }, h('div', { class: 'brand' }, h('span', { class: 'mark', 'aria-hidden': 'true' }), 'Family AI'),
       h('nav', {}, ...links), h('div', { class: 'who' }, h('strong', {}, me.member?.nickname ?? me.displayName ?? ''), h('span', { class: 'muted' }, me.member?.role ?? ''), logout)),
     main));
-  const views = { chat: chatView, hub: hubView, approvals: approvalsView, family: familyView, memory: memoryView, activity: activityView, money: moneyView, settings: settingsView };
+  const views = {
+    chat: chatView, voice: voiceView, coder: coderView, learn: learnView, twin: twinView,
+    hub: hubView, timeline: timelineView, approvals: approvalsView, family: familyView,
+    memory: memoryView, activity: activityView, money: moneyView, settings: settingsView,
+  };
   views[state.view](main).catch((e) => main.replaceChildren(h('p', { class: 'error-text page' }, errorText(e))));
   void refreshBadge();
 }

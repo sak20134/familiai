@@ -46,6 +46,16 @@ async function settingsView(main: HTMLElement): Promise<void> {
     } catch (e) { aiToggle.checked = !aiToggle.checked; throw e; }
   }));
 
+  // Family Twin (opt-in, per person)
+  const twinToggle = h('input', { type: 'checkbox', id: 'twin' });
+  twinToggle.checked = me.twinOptIn;
+  twinToggle.addEventListener('change', () => void busy(null, async () => {
+    try {
+      await api('PATCH', '/me', { twinOptIn: twinToggle.checked });
+      toast(twinToggle.checked ? 'Your twin is on. Only what you shared is used.' : 'Your twin is off.');
+    } catch (e) { twinToggle.checked = !twinToggle.checked; throw e; }
+  }));
+
   // Names and phone
   const aiName = h('input', { type: 'text', maxlength: '30', value: me.aiName });
   const aliases = h('input', { type: 'text', maxlength: '160', value: me.aliases.join(', '), placeholder: 'e.g. Buddy, Jarvis' });
@@ -98,6 +108,9 @@ async function settingsView(main: HTMLElement): Promise<void> {
     h('div', { class: 'card inline' }, h('h2', {}, 'AI Mode'),
       h('label', { class: 'row', for: 'aimode' }, aiToggle, h('span', {}, 'Let the AI do everyday tasks without asking each time')),
       h('p', { class: 'muted' }, canAiMode ? 'Payments, calls and other high-risk actions still always ask you first.' : 'Ask a parent or family admin. AI Mode is for adults.')),
+    h('div', { class: 'card inline' }, h('h2', {}, 'Family Twin'),
+      h('label', { class: 'row', for: 'twin' }, twinToggle, h('span', {}, 'Let my family ask what I would probably say')),
+      h('p', { class: 'muted' }, 'Only notes you saved as family or house are used. Private notes are never used, and the answer is always marked as a guess.')),
     h('div', { class: 'card inline' }, h('h2', {}, 'Names and phone'),
       field('What you call me', aiName), field('Other names I answer to (comma separated)', aliases), phrases,
       field('What I call you', nick), field('Your phone (for calls and check-ins)', phone), save),

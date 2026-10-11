@@ -1,8 +1,8 @@
 // The Family AI brain: one chat turn. Plans with the model (or the demo brain), calls tools through
 // the safety layer, and replies honestly about what is done, waiting for approval, or failed.
 
-import { ageModeFor } from '@familiai/core';
-import { desc, eq } from 'drizzle-orm';
+import { ageModeFor, modeInfo, toolsForMode, twinPrompt } from '@familiai/core';
+import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { schema } from '../db/client';
 import { newId } from '../security';
@@ -27,6 +27,8 @@ const HISTORY = 12;
 
 function systemPrompt(ctx: ToolContext): string {
   const u = ctx.user;
+  const mode = ctx.mode ?? 'chat';
+  const info = modeInfo(mode);
   const ai = u.aiName ?? 'Buddy';
   const name = ctx.member.nickname ?? u.displayName ?? 'there';
   const age = u.birthYear ? ageModeFor(Math.max(0, new Date().getUTCFullYear() - u.birthYear)) : 'adult';
@@ -36,13 +38,18 @@ function systemPrompt(ctx: ToolContext): string {
     adult: 'Be warm, clear and efficient.',
     elder: 'Be patient and clear. Avoid jargon. Repeat key details.',
   }[age];
+  const hasTools = info.tools === '*' || info.tools.length > 0;
   return [
     `You are ${ai}, the family AI for this household. You call the user "${name}".`,
     u.botRole ? `Your personality: act like a ${u.botRole}.` : '',
     `Their family role is ${ctx.member.role}. ${tone}`,
-    'Use tools to act. Some tools need a person to approve first; when a tool result says approval is needed, tell the user it is WAITING for their approval. Never say it is done.',
+    hasTools
+      ? 'Use tools to act. Some tools need a person to approve first; when a tool result says approval is needed, tell the user it is WAITING for their approval. Never say it is done.'
+      : '',
     'Money always needs approval, every time. If a tool fails, say exactly what failed. Never invent results.',
-    'Keep replies short (1 to 4 sentences) unless asked for detail.',
+    info.spoken ? '' : 'Keep replies short (1 to 4 sentences) unless asked for detail.',
+    ...info.lines,
+    ...(ctx.twin ? twinPrompt(ctx.twin.name, ctx.twin.facts) : []),
   ].filter(Boolean).join(' ');
 }
 
@@ -52,21 +59,25 @@ function outcomeLine(o: ToolOutcome): string {
   return o.text;
 }
 
+/** Each mode keeps its own thread, so voice talk never clutters the coding thread. */
 async function loadHistory(ctx: ToolContext) {
   const rows = await ctx.db.select().from(schema.messages)
-    .where(eq(schema.messages.memberId, ctx.member.id))
+    .where(and(eq(schema.messages.memberId, ctx.member.id), eq(schema.messages.mode, ctx.mode ?? 'chat')))
     .orderBy(desc(schema.messages.createdAt)).limit(HISTORY);
   return rows.reverse().filter((r) => r.role === 'user' || r.role === 'assistant')
     .map((r) => ({ role: r.role as 'user' | 'assistant', content: r.content }));
 }
 
 async function save(ctx: ToolContext, role: 'user' | 'assistant', content: string) {
-  await ctx.db.insert(schema.messages).values({ id: newId('msg'), familyId: ctx.member.familyId, memberId: ctx.member.id, role, content });
+  await ctx.db.insert(schema.messages).values({
+    id: newId('msg'), familyId: ctx.member.familyId, memberId: ctx.member.id, role, content, mode: ctx.mode ?? 'chat',
+  });
 }
 
 async function demoTurn(ctx: ToolContext, message: string): Promise<TurnResult> {
   const plan = planDemo(message);
-  if (!plan) {
+  const allowed = toolsForMode(ctx.mode ?? 'chat', TOOLS).map((t) => t.spec.name);
+  if (!plan || !allowed.includes(plan.tool)) {
     return { reply: demoSmallTalk(message, ctx.user.aiName ?? 'Buddy', ctx.member.nickname ?? ctx.user.displayName ?? 'there'), outcomes: [], demo: true };
   }
   const outcome = await invokeTool(ctx, plan.tool, plan.args);
@@ -76,7 +87,7 @@ async function demoTurn(ctx: ToolContext, message: string): Promise<TurnResult> 
 type ContentBlock = { type: 'text'; text: string } | { type: 'tool_use'; id: string; name: string; input: unknown };
 type ApiMessage = { role: 'user' | 'assistant'; content: string | unknown[] };
 
-const toolDefs = () => TOOLS.map((t) => {
+const toolDefs = (ctx: ToolContext) => toolsForMode(ctx.mode ?? 'chat', TOOLS).map((t) => {
   const { $schema: _ignored, ...input_schema } = z.toJSONSchema(t.input, { io: 'input' }) as Record<string, unknown>;
   return { name: t.spec.name, description: `${t.spec.description} (risk: ${t.spec.risk})`, input_schema };
 });
@@ -85,12 +96,13 @@ async function modelTurn(ctx: ToolContext, message: string, cfg: BrainConfig & {
   const fetchImpl = cfg.fetchImpl ?? fetch;
   const messages: ApiMessage[] = [...(await loadHistory(ctx)), { role: 'user', content: message }];
   const outcomes: ToolOutcome[] = [];
+  const tools = toolDefs(ctx);
 
   for (let step = 0; step < MAX_STEPS; step++) {
     const res = await fetchImpl('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-api-key': cfg.apiKey, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: cfg.model, max_tokens: 800, system: systemPrompt(ctx), tools: toolDefs(), messages }),
+      body: JSON.stringify({ model: cfg.model, max_tokens: 800, system: systemPrompt(ctx), ...(tools.length ? { tools } : {}), messages }),
       signal: AbortSignal.timeout(60_000),
     });
     if (!res.ok) throw new Error(`The AI model request failed (${res.status}): ${(await res.text()).slice(0, 200)}`);

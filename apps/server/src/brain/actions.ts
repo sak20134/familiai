@@ -1,7 +1,7 @@
 // Runs tools safely: checks inputs, asks for approval when the risk needs it, executes,
 // verifies, and records the TRUE outcome. Approval rules are enforced here, outside the model.
 
-import { can, describeOutcome, needsApproval, type ApprovalRequest, type Autonomy } from '@familiai/core';
+import { can, describeOutcome, modeInfo, needsApproval, type ApprovalRequest, type Autonomy } from '@familiai/core';
 import { and, eq } from 'drizzle-orm';
 import { asMember, logActivity, type MemberRow } from '../context';
 import { schema, type Db } from '../db/client';
@@ -22,6 +22,11 @@ type ApprovalRow = typeof schema.approvals.$inferSelect;
 export async function invokeTool(ctx: ToolContext, name: string, rawArgs: unknown, autonomy = ctx.autonomy ?? NO_AUTONOMY): Promise<ToolOutcome> {
   const tool = toolByName(name);
   if (!tool) return { kind: 'failed', tool: name, text: `Unknown tool "${name}".` };
+  // The mode's tool list is enforced here too, so a model that asks for a tool it was not given still cannot use it.
+  const allowed = modeInfo(ctx.mode ?? 'chat').tools;
+  if (allowed !== '*' && !allowed.includes(name)) {
+    return { kind: 'failed', tool: name, text: `Not available in ${ctx.mode} mode. Switch to Chat for that.` };
+  }
   if (!can(asMember(ctx.member), tool.requires)) {
     return { kind: 'failed', tool: name, text: `Your family role (${ctx.member.role}) is not allowed to do that. Ask a parent or family admin.` };
   }

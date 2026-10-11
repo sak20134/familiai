@@ -17,6 +17,8 @@ export const users = pgTable('users', {
   aiMode: boolean('ai_mode').notNull().default(false),
   /** Extra names the AI answers to (wake words), besides ai_name. */
   aliases: jsonb('aliases').$type<string[]>().notNull().default([]),
+  /** Family Twin: this person agreed that the AI may guess their answers from what they SHARED. */
+  twinOptIn: boolean('twin_opt_in').notNull().default(false),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -60,9 +62,11 @@ export const messages = pgTable(
     memberId: text('member_id').notNull().references(() => members.id, { onDelete: 'cascade' }),
     role: text('role').notNull(), // user | assistant | tool
     content: text('content').notNull(),
+    /** Which mode this was said in: chat | voice | coder | learn | twin. Each mode keeps its own thread. */
+    mode: text('mode').notNull().default('chat'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
-  (t) => [index('messages_member_time').on(t.memberId, t.createdAt)],
+  (t) => [index('messages_member_time').on(t.memberId, t.createdAt), index('messages_member_mode').on(t.memberId, t.mode)],
 );
 
 export const memories = pgTable(

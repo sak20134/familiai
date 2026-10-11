@@ -56,6 +56,20 @@ export function familyRoutes() {
     });
   });
 
+  /** Family Twin: who has switched theirs on, so you can ask what they would probably say. */
+  app.get('/twin', async (c) => {
+    const db = c.get('db');
+    const me = requireMember(c);
+    const people = await db
+      .select({ id: schema.members.id, nickname: schema.members.nickname, displayName: schema.users.displayName, optIn: schema.users.twinOptIn })
+      .from(schema.members).innerJoin(schema.users, eq(schema.users.id, schema.members.userId))
+      .where(eq(schema.members.familyId, me.familyId));
+    return c.json({
+      mine: people.find((p) => p.id === me.id)?.optIn ?? false,
+      people: people.filter((p) => p.optIn).map((p) => ({ id: p.id, name: p.nickname ?? p.displayName ?? 'Member' })),
+    });
+  });
+
   app.post('/invites', async (c) => {
     const db = c.get('db');
     const me = requireMember(c);

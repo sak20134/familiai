@@ -1,6 +1,9 @@
 // Memory, deleted-items vault, activity feed, money summary and reminders.
 
-import { can, canRead, filterReadable, summarize, type MemoryItem } from '@familiai/core';
+import {
+  can, canRead, filterReadable, summarize, timelineKindFor, timelineMonths,
+  type MemoryItem, type TimelineEntry,
+} from '@familiai/core';
 import { and, desc, eq, lt } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { asMember, fail, logActivity, requireMember, type AppEnv } from '../context';
@@ -106,6 +109,52 @@ export function recordRoutes() {
     const me = requireMember(c);
     const rows = await db.select().from(schema.houseItems).where(eq(schema.houseItems.familyId, me.familyId)).orderBy(desc(schema.houseItems.createdAt));
     return c.json(rows.map((r) => ({ id: r.id, kind: r.kind, name: r.name, details: r.details, dueAt: r.dueAt })));
+  });
+
+  /** Family Memory Timeline: the family's story, month by month. Private notes stay private. */
+  app.get('/timeline', async (c) => {
+    const db = c.get('db');
+    const me = requireMember(c);
+    const m = asMember(me);
+    const [memories, acts, house] = await Promise.all([
+      db.select().from(schema.memories).where(eq(schema.memories.familyId, me.familyId)).orderBy(desc(schema.memories.createdAt)).limit(300),
+      db.select().from(schema.activity).where(and(eq(schema.activity.familyId, me.familyId),
+        can(m, 'view_activity') ? undefined : eq(schema.activity.memberId, me.id))).orderBy(desc(schema.activity.createdAt)).limit(300),
+      db.select().from(schema.houseItems).where(eq(schema.houseItems.familyId, me.familyId)).limit(100),
+    ]);
+    const entries: TimelineEntry[] = [
+      ...filterReadable(m, memories.map(toItem)).map((x) => ({
+        id: x.id, kind: 'memory' as const, text: x.text, at: x.createdAt, ...(x.ownerId ? { memberId: x.ownerId } : {}),
+      })),
+      ...acts.flatMap((a) => {
+        const kind = timelineKindFor(a.kind);
+        return kind ? [{ id: a.id, kind, text: a.summary, at: a.createdAt.getTime(), ...(a.memberId ? { memberId: a.memberId } : {}) }] : [];
+      }),
+      ...house.map((x) => ({ id: x.id, kind: 'house' as const, text: `${x.name}${x.details ? `: ${x.details}` : ''}`, at: x.createdAt.getTime() })),
+    ];
+    const months = timelineMonths(entries);
+    return c.json({ total: entries.length, months: months.slice(0, 24) });
+  });
+
+  /** Kids Learning Coach: what they have been working on, and how many days in a row. */
+  app.get('/learning', async (c) => {
+    const db = c.get('db');
+    const me = requireMember(c);
+    const rows = await db.select().from(schema.activity)
+      .where(and(eq(schema.activity.familyId, me.familyId), eq(schema.activity.memberId, me.id), eq(schema.activity.kind, 'learning')))
+      .orderBy(desc(schema.activity.createdAt)).limit(100);
+    const days = [...new Set(rows.map((r) => r.createdAt.toISOString().slice(0, 10)))].sort().reverse();
+    let streak = 0;
+    for (let i = 0; i < days.length; i++) {
+      const expected = new Date(Date.now() - i * 24 * 3600_000).toISOString().slice(0, 10);
+      if (days[i] === expected) streak++;
+      else break;
+    }
+    return c.json({
+      streak,
+      sessions: rows.length,
+      topics: rows.slice(0, 20).map((r) => ({ text: r.summary.replace(/^Learning: /, ''), at: r.createdAt })),
+    });
   });
 
   /** Family Hub: one screen with money, approvals, reminders, house, check-ins and recent activity. */

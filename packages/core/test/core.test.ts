@@ -14,10 +14,17 @@ import {
   evaluate,
   lastDue,
   makeExpense,
+  modeAllowed,
+  modeInfo,
   moveFocus,
   needsApproval,
   resolveContact,
+  stripWake,
   summarize,
+  timelineKindFor,
+  timelineMonths,
+  toolsForMode,
+  twinPrompt,
   wakePhrases,
   type Member,
   type MemoryItem,
@@ -221,5 +228,75 @@ describe('wake word and tv focus', () => {
     expect(moveFocus(rows, { row: 0, col: 4 }, 'down')).toEqual({ row: 1, col: 1 });
     expect(moveFocus(rows, { row: 1, col: 1 }, 'right')).toEqual({ row: 1, col: 1 });
     expect(moveFocus(rows, { row: 0, col: 0 }, 'up')).toEqual({ row: 0, col: 0 });
+  });
+});
+
+describe('modes', () => {
+  const tools = [{ spec: { name: 'recall' } }, { spec: { name: 'send_money' } }, { spec: { name: 'add_reminder' } }];
+  it('chat and voice keep every tool', () => {
+    expect(toolsForMode('chat', tools)).toHaveLength(3);
+    expect(toolsForMode('voice', tools)).toHaveLength(3);
+    expect(modeInfo('voice').spoken).toBe(true);
+  });
+  it('coder gets no tools at all, so it can never touch money or the family', () => {
+    expect(toolsForMode('coder', tools)).toEqual([]);
+  });
+  it('the learning coach only gets safe tools, and the twin only reads', () => {
+    expect(toolsForMode('learn', tools).map((t) => t.spec.name)).toEqual(['recall', 'add_reminder']);
+    expect(toolsForMode('twin', tools).map((t) => t.spec.name)).toEqual(['recall']);
+  });
+  it('guests only get chat and voice', () => {
+    expect(modeAllowed('coder', 'guest')).toBe(false);
+    expect(modeAllowed('twin', 'guest')).toBe(false);
+    expect(modeAllowed('voice', 'guest')).toBe(true);
+    expect(modeAllowed('twin', 'child')).toBe(true);
+  });
+});
+
+describe('family twin', () => {
+  it('always says it is a guess and never claims to be the person', () => {
+    const lines = twinPrompt('Dad', ['likes filter coffee']).join(' ');
+    expect(lines).toContain('guess');
+    expect(lines).toContain('You are NOT Dad');
+    expect(lines).toContain('likes filter coffee');
+  });
+  it('says there is nothing to go on when nothing was shared', () => {
+    expect(twinPrompt('Mom', []).join(' ')).toContain('not shared anything');
+  });
+});
+
+describe('wake phrase stripping', () => {
+  it('passes on only the request', () => {
+    expect(stripWake('Hey Nova, what is for dinner?', ['hey nova'])).toBe('what is for dinner?');
+  });
+  it('ignores speech with no wake phrase, and a wake phrase with nothing after it', () => {
+    expect(stripWake('what is for dinner?', ['hey nova'])).toBe(null);
+    expect(stripWake('hey nova', ['hey nova'])).toBe(null);
+  });
+});
+
+describe('memory timeline', () => {
+  const at = (iso: string) => new Date(iso).getTime();
+  it('groups by month, newest first, newest entry first', () => {
+    const months = timelineMonths([
+      { id: 'a', kind: 'memory', text: 'old', at: at('2026-08-04T10:00:00Z') },
+      { id: 'b', kind: 'money', text: 'new', at: at('2026-10-09T10:00:00Z') },
+      { id: 'c', kind: 'house', text: 'newer', at: at('2026-10-10T10:00:00Z') },
+    ]);
+    expect(months.map((m) => m.month)).toEqual(['2026-10', '2026-08']);
+    expect(months[0]!.label).toBe('October 2026');
+    expect(months[0]!.entries.map((e) => e.text)).toEqual(['newer', 'new']);
+  });
+  it('keeps the moments worth keeping and drops the noise', () => {
+    expect(timelineKindFor('expense_added')).toBe('money');
+    expect(timelineKindFor('learning')).toBe('learning');
+    expect(timelineKindFor('approval_requested')).toBe(null);
+  });
+});
+
+describe('timeline has no duplicates', () => {
+  it('leaves out the "saved" notes for things already on the timeline', () => {
+    expect(timelineKindFor('memory_saved')).toBe(null);
+    expect(timelineKindFor('house_item')).toBe(null);
   });
 });

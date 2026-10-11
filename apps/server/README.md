@@ -16,6 +16,24 @@ npm start
 
 Your data is saved in `apps/server/data` on your computer.
 
+## The five modes
+
+Pick one in the sidebar. Each mode keeps its own separate thread.
+
+| Mode | What it is | Tools it may use |
+| --- | --- | --- |
+| **Chat** | Plain text chat | all of them |
+| **Voice** | The golden globe. Tap it and talk; it answers out loud. Hands-free listens for your wake word ("hey nova"). | all of them |
+| **Coder** | A dark coding workspace | none at all, so nothing here can touch family data, money or calls |
+| **Learn** | Learning coach for kids: hints first, never straight answers. Keeps a day streak. | memory and reminders only |
+| **Twin** | Asks what someone would probably say | reading memory only |
+
+**Family Twin** is off until each person switches their own on in Settings. It only ever uses notes
+they saved as *family* or *house*, never private ones, and every answer is marked as a guess.
+
+**Timeline** is your family's story month by month: memories, money, house items and moments.
+Your private notes appear only in your own timeline.
+
 ## Turn on the real AI
 
 Without a key, the app uses a free **demo brain**. It understands requests like "spent 600 on groceries", "remember that ...", "remind me to ...", "how much did we spend this month" and "call Dad".
