@@ -12,3 +12,4 @@ node_modules/
 # Ruflo runtime state
 .swarm/
 ruvector.db
+.claude-flow/mods/session.json
