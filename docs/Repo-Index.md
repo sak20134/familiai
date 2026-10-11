@@ -342,3 +342,43 @@ How to read "Plan": TypeScript/JavaScript repos can be used as-is. Other languag
 | 32-on-device-ai | https://github.com/dabit3/react-native-ai | TypeScript | MIT | Use directly (npm package or copy with license notice) |
 | 32-on-device-ai | https://github.com/Mobile-Artificial-Intelligence/maid | TypeScript | MIT | Use directly (npm package or copy with license notice) |
 | 32-on-device-ai | https://github.com/mybigday/llama.rn | TypeScript | MIT | Use directly (npm package or copy with license notice) |
+
+# Fourth batch: build brain, runtime brain, server and chat (Oct 11 2026)
+
+| Step | Repo | Language | License | Plan |
+|---|---|---|---|---|
+| 01-app-shell | https://github.com/expo/examples | TypeScript | MIT | Use directly |
+| 01-app-shell | https://github.com/infinitered/ignite | TypeScript | MIT | Use directly |
+| 02-server | https://github.com/colinhacks/zod | TypeScript | MIT | Use directly |
+| 02-server | https://github.com/electric-sql/pglite | TypeScript | Apache-2.0 | Use directly |
+| 02-server | https://github.com/honojs/middleware | TypeScript | MIT | Use directly |
+| 02-server | https://github.com/partykit/partykit | TypeScript | MIT | Use directly |
+| 02-server | https://github.com/socketio/socket.io | JavaScript | MIT | Use directly |
+| 02-server | https://github.com/WiseLibs/better-sqlite3 | JavaScript | MIT | Use directly |
+| 07-chat-apps | https://github.com/Chainlit/chainlit | TypeScript | Apache-2.0 | Use directly |
+| 07-chat-apps | https://github.com/ChatGPTNextWeb/NextChat | TypeScript | MIT | Use directly |
+| 07-chat-apps | https://github.com/huggingface/chat-ui | TypeScript | Apache-2.0 | Use directly |
+| 07-chat-apps | https://github.com/lobehub/lobe-chat | TypeScript | Apache-2.0 | Use directly |
+| 07-chat-apps | https://github.com/mckaywrigley/chatbot-ui | TypeScript | none-found | Check the license before reusing code |
+| 11-approvals | https://github.com/CopilotKit/CopilotKit | TypeScript | MIT | Use directly |
+| 11-approvals | https://github.com/humanlayer/humanlayer | TypeScript | Apache-2.0 | Use directly |
+| 11-approvals | https://github.com/langchain-ai/agent-inbox | TypeScript | MIT | Use directly |
+| 32-security | https://github.com/gitleaks/gitleaks | Go | MIT | Rewrite in TypeScript |
+| 32-security | https://github.com/OWASP/CheatSheetSeries | JavaScript | other | Check the license before reusing code |
+| 32-security | https://github.com/trufflesecurity/trufflehog | Go | AGPL | Ideas only (copying would force our code under AGPL) |
+| 32-testing | https://github.com/mswjs/msw | TypeScript | MIT | Use directly |
+| 32-testing | https://github.com/vitest-dev/vitest | TypeScript | MIT | Use directly |
+| brain-build | https://github.com/garrytan/gstack | TypeScript | MIT | Use directly |
+| brain-build | https://github.com/ruvnet/agentic-flow | TypeScript | MIT | Use directly |
+| brain-build | https://github.com/ruvnet/ruvector | Rust | MIT | Rewrite in TypeScript |
+| brain-runtime | https://github.com/agno-agi/agno | Python | Apache-2.0 | Rewrite in TypeScript |
+| brain-runtime | https://github.com/anthropics/anthropic-sdk-typescript | TypeScript | MIT | Use directly |
+| brain-runtime | https://github.com/anthropics/claude-agent-sdk-typescript | TypeScript | other | Check the license before reusing code |
+| brain-runtime | https://github.com/anthropics/claude-cookbooks | Python | MIT | Rewrite in TypeScript |
+| brain-runtime | https://github.com/elevenlabs/elevenlabs-js | TypeScript | MIT | Use directly |
+| brain-runtime | https://github.com/GibsonAI/memori | Python | Apache-2.0 | Rewrite in TypeScript |
+| brain-runtime | https://github.com/janhq/jan | TypeScript | Apache-2.0 | Use directly |
+| brain-runtime | https://github.com/khoj-ai/khoj | Python | AGPL | Ideas only (copying would force our code under AGPL) |
+| brain-runtime | https://github.com/letta-ai/letta-code | TypeScript | Apache-2.0 | Use directly |
+| brain-runtime | https://github.com/openai/openai-node | TypeScript | Apache-2.0 | Use directly |
+| brain-runtime | https://github.com/openclaw/openclaw | TypeScript | MIT | Use directly |
