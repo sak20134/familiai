@@ -407,3 +407,12 @@ repos would force all of Family AI under AGPL if their code were copied in.
 | 03-brain | https://github.com/InternScience/Awesome-Scientific-Skills | Markdown | MIT | Reference. A skills pack for scientific work; useful as a model for how to write our own skill files. |
 | 10-security | https://github.com/mukul975/Anthropic-Cybersecurity-Skills | Markdown | Apache-2.0 | Cherry-pick only. 818 DEFENSIVE security skills (SOC playbooks, detection, hardening, secrets, CI security). NOT an Anthropic project despite the name. Do not install all of it; take the few that apply to our server. |
 | 00-builder-brain | https://github.com/affaan-m/everything-claude-code | TypeScript + Python | MIT | Reference first. "ECC": 71 agents, 613 skills, 97 commands, 122 always-on rules, hooks and MCP configs for Claude Code. Installing it whole would bury gstack, Ruflo and the Replica pack and change how the assistant behaves on every turn — cherry-pick instead, or install on the PC after backing up ~/.claude. |
+
+# Seventh batch: learning, research, local models, media front-end (Oct 12 2026)
+
+| Step | Repo | Language | License | Plan |
+|---|---|---|---|---|
+| 14-learning | https://github.com/THU-MAIC/OpenMAIC | TypeScript + Python | MIT | Use directly. Open Multi-Agent Interactive Classroom from Tsinghua: several teaching agents running one lesson. The best reference we have for the Kids Learning Coach. |
+| 15-research | https://github.com/Imbad0202/academic-research-skills | Markdown | ⚠️ CC BY-NC 4.0 | Personal use only. NON-COMMERCIAL licence: fine for our own research, but none of it may ship inside Family AI if we ever charge for it. |
+| 03-brain | https://github.com/jingyaogong/minimind | Python | Apache-2.0 | Reference. Trains a tiny language model from scratch on one GPU. Read it to understand what the model does; we are not training our own. |
+| 11-tools | https://github.com/iv-org/invidious | Crystal | AGPL-3.0 | Ideas only. Privacy-respecting YouTube front-end — useful for how it reads YouTube without the official API, nothing more. |
