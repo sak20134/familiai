@@ -1,0 +1,21 @@
+{
+  "name": "@familiai/stream-copilot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI copilot for live streamers: OBS control, chat moderation, commands, polls, giveaways and stream summaries.",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@familiai/core": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3"
+  }
+}
