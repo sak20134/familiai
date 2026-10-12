@@ -21,3 +21,4 @@ ruvector.db
 .claude-flow/memory/
 apps/*/.claude-flow/
 packages/*/.claude-flow/
+.node/
