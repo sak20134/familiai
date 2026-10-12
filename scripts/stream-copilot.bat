@@ -5,19 +5,12 @@ setlocal
 title Stream Copilot
 set "HOME_DIR=%USERPROFILE%\familiai"
 set "BRANCH=feat/desktop-bot"
-set "REPO=https://github.com/sak20134/familiai.git"
+set "ZIP=https://github.com/sak20134/familiai/archive/refs/heads/feat/desktop-bot.zip"
 
 echo.
 echo  Stream Copilot
 echo  ==============
 echo.
-
-where git >nul 2>nul
-if errorlevel 1 (
-  echo  Git is not installed. Get it from https://git-scm.com/download/win
-  echo  then double-click this file again.
-  goto :fail
-)
 
 where node >nul 2>nul
 if errorlevel 1 (
@@ -32,17 +25,30 @@ if %NODEV% LSS 22 (
   goto :fail
 )
 
-if exist "%HOME_DIR%\.git" (
+rem Git is optional: with a git copy we update with git, otherwise we download a zip using the
+rem curl and tar programs built into Windows 10 and 11. Your .env and data folders are kept either way.
+set "USE_GIT=0"
+where git >nul 2>nul && if exist "%HOME_DIR%\.git" set "USE_GIT=1"
+
+if "%USE_GIT%"=="1" (
   echo  Updating to the latest version...
   pushd "%HOME_DIR%"
   git fetch origin %BRANCH% || goto :fail_pop
   git checkout %BRANCH% || goto :fail_pop
   git pull --ff-only origin %BRANCH% || goto :fail_pop
-) else (
-  echo  Downloading Stream Copilot into %HOME_DIR% ...
-  git clone -b %BRANCH% %REPO% "%HOME_DIR%" || goto :fail
-  pushd "%HOME_DIR%"
+  goto :install
 )
+
+where curl >nul 2>nul || goto :no_tools
+where tar >nul 2>nul || goto :no_tools
+echo  Downloading the latest Stream Copilot into %HOME_DIR% ...
+if not exist "%HOME_DIR%" mkdir "%HOME_DIR%"
+curl -fsSL -o "%TEMP%\familiai.zip" "%ZIP%" || goto :fail
+tar -xf "%TEMP%\familiai.zip" --strip-components=1 -C "%HOME_DIR%" || goto :fail
+del "%TEMP%\familiai.zip" >nul 2>nul
+pushd "%HOME_DIR%"
+
+:install
 
 echo.
 echo  Installing (the first time takes a minute)...
@@ -62,6 +68,11 @@ echo.
 echo  Stream Copilot stopped.
 pause
 exit /b 0
+
+:no_tools
+echo  This Windows is missing curl or tar, which come with Windows 10 and 11.
+echo  Install Git from https://git-scm.com/download/win instead, then double-click this again.
+goto :fail
 
 :fail_pop
 popd
