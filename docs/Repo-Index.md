@@ -382,3 +382,15 @@ How to read "Plan": TypeScript/JavaScript repos can be used as-is. Other languag
 | brain-runtime | https://github.com/letta-ai/letta-code | TypeScript | Apache-2.0 | Use directly |
 | brain-runtime | https://github.com/openai/openai-node | TypeScript | Apache-2.0 | Use directly |
 | brain-runtime | https://github.com/openclaw/openclaw | TypeScript | MIT | Use directly |
+
+# Fifth batch: voice, local AI workspace and free APIs (Oct 12 2026)
+
+Cloned to `refs6/`. Read the Plan column before using any of it: the two AGPL
+repos would force all of Family AI under AGPL if their code were copied in.
+
+| Step | Repo | Language | License | Plan |
+|---|---|---|---|---|
+| 12-voice | https://github.com/cjpais/Handy | Rust + TypeScript (Tauri) | MIT | Use directly. Offline speech-to-text with a global shortcut, Whisper/Parakeet models, VAD, tray app — the closest match to our Voice mode and desktop bot. |
+| 12-voice | https://github.com/debpalash/OmniVoice-Studio | Python + TypeScript | AGPL-3.0 | Ideas only. Voice cloning, dubbing, dictation and TTS in 646 languages. Read how it does streaming TTS; never copy the code. |
+| 03-brain | https://github.com/pewdiepie-archdaemon/odysseus | Python | AGPL-3.0 | Ideas only. Self-hosted AI workspace: chat, agents, research, documents, email, notes, calendar, local models. Closest sibling to Family AI; study its layout and agent loop, write our own. |
+| 09-integrations | https://github.com/public-apis/public-apis | Markdown | MIT | Use directly. Catalogue of free public APIs — the menu for House, Money, weather, calendar and news tools. |
