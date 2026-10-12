@@ -395,3 +395,14 @@ repos would force all of Family AI under AGPL if their code were copied in.
 | 03-brain | https://github.com/pewdiepie-archdaemon/odysseus | Python | AGPL-3.0 | Ideas only. Self-hosted AI workspace: chat, agents, research, documents, email, notes, calendar, local models. Closest sibling to Family AI; study its layout and agent loop, write our own. |
 | 09-integrations | https://github.com/public-apis/public-apis | Markdown | MIT | Use directly. Catalogue of free public APIs — the menu for House, Money, weather, calendar and news tools. |
 | 03-brain | https://github.com/ashishpatel26/500-AI-Agents-Projects | Python | MIT | Use directly. 500+ agent use cases plus 22 working agents (research, SQL, email, meeting notes, recipe, travel, multi-agent debate) and a CrewAI MCP course. Mine it for tool patterns and agent-loop ideas; the recipe, travel and meeting-notes agents map onto House, Hub and check-ins. |
+
+# Sixth batch: memory, browser control, harness engineering, skill packs (Oct 12 2026)
+
+| Step | Repo | Language | License | Plan |
+|---|---|---|---|---|
+| 05-memory | https://github.com/volcengine/OpenViking | Python | AGPL-3.0 | Ideas only. A context database for AI agents: one filesystem for knowledge, memory and skills. Closest thing to what our memory scopes want to become — study it, or self-host it as a separate service, but never copy code in. |
+| 11-tools | https://github.com/browser-use/browser-use | Python | MIT | Use directly. Lets an AI drive a real browser (fill forms, book things, click through sites). This is how Family AI could do "read my LinkedIn and reply" without an API. |
+| 00-builder-brain | https://github.com/deusyu/harness-engineering | Markdown (Chinese) | MIT | Reference. A deep study archive on agent harness engineering — how to build the scaffolding an agent runs in. |
+| 00-builder-brain | https://github.com/Picrew/awesome-agent-harness | Markdown | not stated | Reference list only. Implementation-first index of agent-harness projects. Check each linked project's own licence before using it. |
+| 03-brain | https://github.com/InternScience/Awesome-Scientific-Skills | Markdown | MIT | Reference. A skills pack for scientific work; useful as a model for how to write our own skill files. |
+| 10-security | https://github.com/mukul975/Anthropic-Cybersecurity-Skills | Markdown | Apache-2.0 | Cherry-pick only. 818 DEFENSIVE security skills (SOC playbooks, detection, hardening, secrets, CI security). NOT an Anthropic project despite the name. Do not install all of it; take the few that apply to our server. |
