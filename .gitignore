@@ -20,3 +20,4 @@ ruvector.db
 .claude-flow/neural/
 .claude-flow/memory/
 apps/*/.claude-flow/
+packages/*/.claude-flow/

@@ -10,3 +10,5 @@ export * from './wakeword';
 export * from './tvFocus';
 export * from './modes';
 export * from './timeline';
+export * from './webfetch';
+export * from './weather';

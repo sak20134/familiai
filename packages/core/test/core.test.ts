@@ -11,6 +11,14 @@ import {
   canRead,
   describeOutcome,
   escalationFor,
+  firstPlace,
+  forecastLines,
+  htmlTitle,
+  htmlToText,
+  isBlockedHost,
+  isBlockedIp,
+  parseHttpUrl,
+  readForecast,
   evaluate,
   lastDue,
   makeExpense,
@@ -298,5 +306,57 @@ describe('timeline has no duplicates', () => {
   it('leaves out the "saved" notes for things already on the timeline', () => {
     expect(timelineKindFor('memory_saved')).toBe(null);
     expect(timelineKindFor('house_item')).toBe(null);
+  });
+});
+
+describe('reading web pages safely', () => {
+  it('only accepts real web addresses', () => {
+    expect(parseHttpUrl('https://example.com/a')?.hostname).toBe('example.com');
+    expect(parseHttpUrl('file:///etc/passwd')).toBe(null);
+    expect(parseHttpUrl('javascript:alert(1)')).toBe(null);
+    expect(parseHttpUrl('not a url')).toBe(null);
+  });
+  it('never lets the AI reach our own machine or private network', () => {
+    for (const host of ['localhost', '127.0.0.1', '10.0.0.5', '192.168.1.1', '172.16.0.1', '169.254.169.254', '[::1]', 'printer.local', 'intranet']) {
+      expect(isBlockedHost(host)).toBe(true);
+    }
+    expect(isBlockedIp('::ffff:127.0.0.1')).toBe(true);
+    expect(isBlockedHost('example.com')).toBe(false);
+    expect(isBlockedIp('8.8.8.8')).toBe(false);
+    expect(isBlockedIp('172.32.0.1')).toBe(false); // just outside the private range
+  });
+  it('turns a page into plain text with no scripts left', () => {
+    const html = '<html><head><title>Hi &amp; bye</title><script>steal()</script></head><body><p>One</p><style>x{}</style><p>Two &lt;b&gt;</p></body></html>';
+    const text = htmlToText(html);
+    expect(text).toContain('One');
+    expect(text).toContain('Two <b>');
+    expect(text).not.toContain('steal');
+    expect(htmlTitle(html)).toBe('Hi & bye');
+    expect(htmlToText('x'.repeat(50), 10)).toContain('page continues');
+  });
+});
+
+describe('weather', () => {
+  it('reads a place and a forecast into one short spoken line', () => {
+    const place = firstPlace({ results: [{ name: 'Chennai', country: 'India', latitude: 13.08, longitude: 80.27 }] });
+    expect(place?.name).toBe('Chennai');
+    expect(firstPlace({ results: [] })).toBe(null);
+    const f = readForecast({
+      current: { temperature_2m: 31.4, weather_code: 2 },
+      daily: { time: ['2026-10-12', '2026-10-13'], weather_code: [61, 0], temperature_2m_max: [32, 33], temperature_2m_min: [25, 26], precipitation_probability_max: [70, 5] },
+    });
+    const line = forecastLines(place!, f!);
+    expect(line).toContain('31°C and partly cloudy right now');
+    expect(line).toContain('Today: 25–32°C, rain, 70% chance of rain');
+    expect(line).toContain('Tomorrow: 26–33°C, clear');
+    expect(line).not.toContain('5% chance'); // small chances are left out
+  });
+});
+
+describe('learning coach method', () => {
+  it('teaches at the edge of what they can do and has them explain it back', () => {
+    const lines = modeInfo('learn').lines.join(' ');
+    expect(lines).toContain('explain it back in their own words');
+    expect(lines).toContain('just past that edge');
   });
 });
