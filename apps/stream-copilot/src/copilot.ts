@@ -163,6 +163,14 @@ export class Copilot {
     return { kind: 'done', text: `Okay, not doing it: ${p.summary}.` };
   }
 
+  /**
+   * Runs a plan the caller has ALREADY cleared through its own approval gate (the desktop bot
+   * uses one gate for every tool). Never call this with something the user has not okayed.
+   */
+  async runApproved(plan: Plan): Promise<Outcome> {
+    return this.execute(plan);
+  }
+
   private expire(): void {
     const now = this.now();
     for (const [id, p] of this.pending) if (now - p.createdAt > APPROVAL_TTL_MS) this.pending.delete(id);

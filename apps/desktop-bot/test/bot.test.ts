@@ -3,7 +3,6 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { removeBackground } from '../src/main/background';
-import { buildRequestBody, demoReply, parseModelReply, reply } from '../src/main/chat';
 import { parseEnv } from '../src/main/env';
 import { detectImageType, isAllowedDownloadUrl, MAX_IMAGE_BYTES, pngDataUrlToBuffer, validateImage } from '../src/main/images';
 import { buildSearchUrl, cleanQuery, parseResults, searchImages } from '../src/main/openverse';
@@ -88,48 +87,6 @@ describe('settings', () => {
     writeFileSync(join(dir, 'settings.json'), '{not json', 'utf8');
     expect(new SettingsStore(dir).get()).toEqual(DEFAULT_SETTINGS);
     expect(readFileSync(join(dir, 'settings.json'), 'utf8')).toContain('not json');
-  });
-});
-
-describe('chat', () => {
-  it('gives a demo reply without a key and never calls the network', async () => {
-    let called = false;
-    const r = await reply({
-      message: 'hi', history: [], botName: 'Milo', apiKey: undefined, model: 'm',
-      fetchImpl: async () => { called = true; return new Response('{}'); },
-    });
-    expect(r.demo).toBe(true);
-    expect(called).toBe(false);
-    expect(demoReply('who are you', 'Milo')).toContain('Milo');
-  });
-  it('sends a model request with the key in a header, not the body', async () => {
-    let seen: { headers?: Record<string, string>; body?: string } = {};
-    const r = await reply({
-      message: 'hello', history: [{ role: 'user', content: 'a' }, { role: 'assistant', content: 'b' }],
-      botName: 'Milo', apiKey: 'sk-test', model: 'claude-sonnet-5-5',
-      fetchImpl: async (_url, init) => {
-        seen = { headers: init?.headers as Record<string, string>, body: String(init?.body) };
-        return new Response(JSON.stringify({ content: [{ type: 'text', text: 'Hi there!' }] }), { status: 200 });
-      },
-    });
-    expect(r).toEqual({ text: 'Hi there!', demo: false });
-    expect(seen.headers?.['x-api-key']).toBe('sk-test');
-    expect(seen.body).not.toContain('sk-test');
-    expect(JSON.parse(seen.body ?? '{}').messages).toHaveLength(3);
-  });
-  it('shows the real failure and not the key', async () => {
-    const p = reply({
-      message: 'hello', history: [], botName: 'Milo', apiKey: 'sk-secret', model: 'm',
-      fetchImpl: async () => new Response('invalid key', { status: 401 }),
-    });
-    await expect(p).rejects.toThrow('401');
-    await expect(p).rejects.not.toThrow('sk-secret');
-  });
-  it('rejects empty messages and odd model answers', async () => {
-    await expect(reply({ message: '  ', history: [], botName: 'M', apiKey: undefined, model: 'm' })).rejects.toThrow();
-    expect(() => parseModelReply({ content: [] })).toThrow();
-    expect(() => parseModelReply({})).toThrow();
-    expect(buildRequestBody([], 'm', 'Milo').system).toContain('Milo');
   });
 });
 

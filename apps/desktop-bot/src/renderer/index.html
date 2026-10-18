@@ -10,32 +10,118 @@
 </head>
 <body>
   <main id="stage">
-    <section id="chat" class="panel" data-hit hidden>
-      <div id="chat-log" aria-live="polite"></div>
-      <form id="chat-form" autocomplete="off">
-        <input id="chat-input" type="text" maxlength="1000" placeholder="Say something..." />
-        <button type="submit">Send</button>
-      </form>
-      <p id="demo-note" class="note" hidden>Demo mode. Add your key to the .env file for real answers.</p>
+    <!-- The big panel. Hidden until the menu button opens it. -->
+    <section id="panel" class="panel" data-hit hidden>
+      <nav class="tabs" role="tablist" aria-label="Bot panels">
+        <button type="button" role="tab" data-tab="home" aria-selected="true">Home</button>
+        <button type="button" role="tab" data-tab="stream">Stream</button>
+        <button type="button" role="tab" data-tab="family">Family</button>
+        <button type="button" role="tab" data-tab="activity">Activity</button>
+        <button type="button" role="tab" data-tab="settings">Settings</button>
+      </nav>
+
+      <div class="tab" id="tab-home">
+        <div id="status-line" class="status"></div>
+        <h3>Waiting for an OK</h3>
+        <div id="pending-list"></div>
+        <h3>Recent</h3>
+        <div id="log"></div>
+      </div>
+
+      <div class="tab" id="tab-stream" hidden>
+        <div class="row-between"><span>OBS</span><span id="obs-state" class="pill"></span></div>
+        <p id="obs-detail" class="note"></p>
+        <div class="row-between"><span>Twitch chat</span><span id="twitch-state" class="pill"></span></div>
+        <p id="twitch-detail" class="note"></p>
+        <p id="stream-extra" class="note"></p>
+        <button type="button" id="btn-connect" class="wide">Connect OBS and Twitch</button>
+        <h3>Quick</h3>
+        <div class="chips" id="stream-chips"></div>
+        <p class="note">Say it naturally too: "switch to BRB", "mute mic", "timeout name 5 minutes", "start a poll: best snack? chips or popcorn", "start a giveaway for a game key", "draw winner", "summary". Bans and ending the stream always ask first.</p>
+      </div>
+
+      <div class="tab" id="tab-family" hidden>
+        <h3>Screen time today</h3>
+        <ul id="limits" class="list"></ul>
+        <form id="limit-form" class="row" autocomplete="off">
+          <input id="limit-app" type="text" maxlength="40" placeholder="gaming, minecraft..." aria-label="App to limit" />
+          <input id="limit-min" type="number" min="1" max="1440" value="60" aria-label="Minutes a day" />
+          <button type="submit">Set</button>
+        </form>
+        <h3>Family</h3>
+        <ul id="members" class="list"></ul>
+        <form id="member-form" class="row" autocomplete="off">
+          <input id="member-name" type="text" maxlength="40" placeholder="Name" aria-label="Name" />
+          <select id="member-role" aria-label="Role">
+            <option value="child">Child</option><option value="teen">Teen</option><option value="adult">Adult</option>
+            <option value="elder">Elder</option><option value="admin">Admin</option><option value="guest">Guest</option>
+          </select>
+          <button type="submit">Add</button>
+        </form>
+        <h3>Phones</h3>
+        <div id="phone-box"></div>
+        <ul id="devices" class="list"></ul>
+      </div>
+
+      <div class="tab" id="tab-activity" hidden>
+        <p class="note">Everything the bot was asked and did, with its real result. This list is never edited, so deleted things still show here.</p>
+        <ul id="activity" class="list"></ul>
+      </div>
+
+      <div class="tab" id="tab-settings" hidden>
+        <h3>AI brain</h3>
+        <label class="field">Provider
+          <select id="cfg-provider">
+            <option value="none">None (fixed commands only)</option>
+            <option value="anthropic">Claude (needs a key)</option>
+            <option value="ollama">Ollama (free, runs on this computer)</option>
+          </select>
+        </label>
+        <label class="field">Model <input id="cfg-model" type="text" maxlength="80" placeholder="default" /></label>
+        <label class="field" id="row-key">Claude key <input id="cfg-key" type="password" maxlength="400" placeholder="sk-ant-..." autocomplete="off" /></label>
+        <label class="field" id="row-ollama">Ollama address <input id="cfg-ollama" type="text" maxlength="200" /></label>
+        <h3>Stream</h3>
+        <label class="field">OBS address <input id="cfg-obs" type="text" maxlength="200" /></label>
+        <label class="field">OBS password <input id="cfg-obs-pass" type="password" maxlength="400" autocomplete="off" /></label>
+        <label class="field">Twitch client ID <input id="cfg-tw-id" type="text" maxlength="64" /></label>
+        <label class="field">Twitch token <input id="cfg-tw-token" type="password" maxlength="400" autocomplete="off" /></label>
+        <label class="field">Twitch channel <input id="cfg-tw-channel" type="text" maxlength="40" /></label>
+        <label class="check"><input id="cfg-autoconnect" type="checkbox" /> Connect stream when the bot starts</label>
+        <h3>Safety and voice</h3>
+        <label class="check"><input id="cfg-aimode" type="checkbox" /> AI Mode: medium-risk actions run without asking (money and high-risk still ask)</label>
+        <label class="check"><input id="cfg-phone" type="checkbox" /> Phone control on the home Wi-Fi</label>
+        <label class="check"><input id="cfg-speak" type="checkbox" /> Speak replies out loud</label>
+        <h3>Look</h3>
+        <form id="name-form" class="row" autocomplete="off">
+          <input id="bot-name" type="text" maxlength="30" aria-label="Bot name" />
+          <button type="submit">Rename</button>
+        </form>
+        <div class="chips">
+          <button type="button" id="btn-add">Add image</button>
+          <button type="button" id="btn-bg">Remove bg</button>
+          <button type="button" id="btn-reset">Cat</button>
+          <button type="button" id="btn-quiet">Quiet</button>
+        </div>
+        <form id="search-form" class="row" autocomplete="off">
+          <input id="search-input" type="text" maxlength="80" placeholder="Search images, e.g. orange cat" />
+          <button type="submit">Search</button>
+        </form>
+        <p id="search-status" class="note"></p>
+        <div id="results"></div>
+        <p id="secure-note" class="note"></p>
+        <button type="button" id="btn-save" class="wide primary">Save settings</button>
+        <p id="save-status" class="note" aria-live="polite"></p>
+        <button type="button" id="btn-quit" class="wide">Quit the bot</button>
+      </div>
     </section>
 
-    <section id="search" class="panel" data-hit hidden>
-      <form id="search-form" autocomplete="off">
-        <input id="search-input" type="text" maxlength="80" placeholder="Search images, e.g. orange cat" />
-        <button type="submit">Search</button>
-      </form>
-      <p id="search-status" class="note"></p>
-      <div id="results"></div>
-      <p class="note">Free-license images from Openverse. Check each license before sharing.</p>
-    </section>
-
+    <div id="cards" data-hit></div>
     <div id="speech" data-hit hidden></div>
 
     <div id="bot-area">
-      <div id="handle" data-hit title="Drag to move">
-        <span></span><span></span><span></span>
-      </div>
-      <button id="bot" data-hit type="button" aria-label="Your bot. Click to chat.">
+      <div id="banner" hidden></div>
+      <div id="handle" data-hit title="Drag to move"><span></span><span></span><span></span></div>
+      <button id="bot" data-hit type="button" aria-label="Your bot. Click to talk.">
         <img id="bot-img" alt="" hidden />
         <svg id="bot-cat" viewBox="0 0 200 200" role="img" aria-label="Cat">
           <polygon points="45,70 55,20 90,50" fill="#e8a24a" />
@@ -51,15 +137,11 @@
           <path d="M40 120 L10 112 M40 130 L8 134 M160 120 L190 112 M160 130 L192 134" stroke="#2b2b2b" stroke-width="2.5" stroke-linecap="round" />
         </svg>
       </button>
-      <nav id="menu" data-hit aria-label="Bot options">
-        <button type="button" id="btn-chat">Chat</button>
-        <button type="button" id="btn-search">Search</button>
-        <button type="button" id="btn-add">Add image</button>
-        <button type="button" id="btn-bg">Remove bg</button>
-        <button type="button" id="btn-reset">Cat</button>
-        <button type="button" id="btn-quiet">Quiet</button>
-        <button type="button" id="btn-quit">Quit</button>
-      </nav>
+      <form id="ask-form" data-hit autocomplete="off">
+        <input id="ask" type="text" maxlength="2000" placeholder="Ask, or tell me to do something" aria-label="Ask the bot" />
+        <button type="button" id="btn-menu" aria-label="Open panel" aria-expanded="false">☰</button>
+        <button type="button" id="btn-stop" class="danger" aria-label="Stop everything" title="Stop everything (Ctrl+Alt+S)">■</button>
+      </form>
     </div>
   </main>
   <script src="renderer.js"></script>

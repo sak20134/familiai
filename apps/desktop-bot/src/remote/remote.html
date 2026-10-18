@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Family Bot Remote</title>
+<style>
+  :root { --bg:#f6f4ef; --card:#fff; --ink:#1d1b18; --muted:#6c675e; --line:#e3ded3; --accent:#c7832a; --danger:#c0392b; --ok:#2e7d4f; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#141311; --card:#1f1d1a; --ink:#f1eee8; --muted:#a49e93; --line:#34302a; --accent:#e0a24a; --danger:#e15b4c; --ok:#5cc58a; } }
+  * { box-sizing: border-box; }
+  body { margin:0; font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--ink); padding:16px; padding-bottom:96px; }
+  h1 { font-size:20px; margin:4px 0 2px; }
+  h2 { font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:22px 0 8px; }
+  .sub { color:var(--muted); font-size:14px; margin:0 0 12px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:10px; }
+  input, button { font:inherit; border-radius:10px; }
+  input { width:100%; padding:12px; border:1px solid var(--line); background:var(--bg); color:var(--ink); }
+  button { padding:11px 14px; border:1px solid var(--line); background:var(--card); color:var(--ink); cursor:pointer; min-height:44px; }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#1d1b18; font-weight:600; }
+  button.ok { border-color:var(--ok); color:var(--ok); }
+  button.no { border-color:var(--danger); color:var(--danger); }
+  .row { display:flex; gap:8px; }
+  .row > input { flex:1; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .reply { white-space:pre-wrap; margin-top:10px; }
+  .pending .actions { display:flex; gap:8px; margin-top:8px; }
+  .meta { color:var(--muted); font-size:13px; }
+  .list { list-style:none; padding:0; margin:0; }
+  .list li { padding:8px 0; border-bottom:1px solid var(--line); font-size:14px; }
+  .list li:last-child { border-bottom:0; }
+  .badge { display:inline-block; font-size:12px; padding:2px 8px; border-radius:99px; border:1px solid var(--line); color:var(--muted); }
+  .badge.live { color:var(--danger); border-color:var(--danger); }
+  #stop { position:fixed; left:16px; right:16px; bottom:16px; background:var(--danger); border-color:var(--danger); color:#fff; font-weight:700; font-size:17px; padding:14px; }
+  .err { color:var(--danger); }
+  [hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<main>
+  <section id="pair" hidden>
+    <h1>Pair this phone</h1>
+    <p class="sub">On the computer, open the bot's Family panel, pick who uses this phone and tap "Pair a phone". Type the 6-digit code here.</p>
+    <div class="card">
+      <form id="pair-form" autocomplete="off">
+        <label class="meta" for="code">Code</label>
+        <input id="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="123456" required>
+        <label class="meta" for="dname" style="display:block;margin-top:10px">Name for this phone</label>
+        <input id="dname" maxlength="40" placeholder="Mom's phone">
+        <button class="primary" style="width:100%;margin-top:12px" type="submit">Pair</button>
+        <p id="pair-err" class="err" role="alert"></p>
+      </form>
+    </div>
+  </section>
+
+  <section id="app" hidden>
+    <h1 id="title">Family Bot</h1>
+    <p class="sub" id="who"></p>
+    <p class="sub err" id="stopped" hidden>Everything is stopped. Say "resume" to continue.</p>
+    <p class="sub err" id="takeover" hidden></p>
+
+    <div class="card">
+      <form id="ask-form" class="row" autocomplete="off">
+        <input id="ask" maxlength="2000" placeholder="Ask or tell the bot to do something">
+        <button class="primary" type="submit">Send</button>
+      </form>
+      <div class="chips" style="margin-top:10px" id="quick"></div>
+      <div id="reply" class="reply" aria-live="polite"></div>
+    </div>
+
+    <h2>Waiting for an OK</h2>
+    <div id="pending"></div>
+
+    <h2>Screen time today</h2>
+    <div class="card"><ul class="list" id="limits"></ul></div>
+
+    <h2>Stream</h2>
+    <div class="card meta" id="stream"></div>
+
+    <h2>Activity</h2>
+    <div class="card"><ul class="list" id="activity"></ul></div>
+    <p class="meta"><button id="unpair" type="button">Unpair this phone</button></p>
+  </section>
+</main>
+<button id="stop" type="button" hidden>STOP the bot</button>
+
+<script>
+(() => {
+  const KEY = 'familybot.token';
+  const $ = (id) => document.getElementById(id);
+  let token = null;
+  try { token = localStorage.getItem(KEY); } catch {}
+
+  async function api(path, body) {
+    const res = await fetch(path, {
+      method: body ? 'POST' : 'GET',
+      headers: Object.assign({ authorization: 'Bearer ' + (token || '') }, body ? { 'content-type': 'application/json' } : {}),
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401) { forget(); throw new Error(data.error || 'Not paired.'); }
+    if (!res.ok) throw new Error(data.error || ('Error ' + res.status));
+    return data;
+  }
+
+  function forget() { token = null; try { localStorage.removeItem(KEY); } catch {} show(); }
+
+  function show() {
+    $('pair').hidden = !!token;
+    $('app').hidden = !token;
+    $('stop').hidden = !token;
+    if (token) refresh();
+  }
+
+  function item(text, meta) {
+    const li = document.createElement('li');
+    li.textContent = text;
+    if (meta) { const m = document.createElement('div'); m.className = 'meta'; m.textContent = meta; li.appendChild(m); }
+    return li;
+  }
+
+  function describe(o) {
+    if (!o) return '';
+    if (o.kind === 'done') return o.verified ? o.text : o.text + ' (not double-checked)';
+    if (o.kind === 'needs_approval') return 'Waiting for an OK: ' + o.summary;
+    if (o.kind === 'blocked') return o.text;
+    return 'Could not do that: ' + o.text;
+  }
+
+  async function refresh() {
+    try {
+      const s = await api('/api/state');
+      $('title').textContent = s.botName || 'Family Bot';
+      $('who').textContent = 'You are ' + s.you.name + ' (' + s.you.role + ')';
+      $('stopped').hidden = !s.stopped;
+      $('takeover').hidden = !s.takeover.active;
+      $('takeover').textContent = s.takeover.active ? 'The bot is controlling the keyboard (started by ' + s.takeover.by + ').' : '';
+
+      const pend = $('pending'); pend.replaceChildren();
+      if (!s.pending.length) pend.appendChild(Object.assign(document.createElement('p'), { className: 'meta', textContent: 'Nothing is waiting.' }));
+      for (const p of s.pending) {
+        const card = document.createElement('div'); card.className = 'card pending';
+        const t = document.createElement('div'); t.textContent = p.summary;
+        const m = document.createElement('div'); m.className = 'meta'; m.textContent = 'Asked by ' + p.requestedBy + ' · ' + p.risk + ' risk';
+        card.append(t, m);
+        if (s.canApprove) {
+          const a = document.createElement('div'); a.className = 'actions';
+          const yes = Object.assign(document.createElement('button'), { className: 'ok', type: 'button', textContent: 'Approve' });
+          const no = Object.assign(document.createElement('button'), { className: 'no', type: 'button', textContent: 'Reject' });
+          yes.onclick = () => decide('/api/approve', p.id);
+          no.onclick = () => decide('/api/reject', p.id);
+          a.append(yes, no); card.appendChild(a);
+        }
+        pend.appendChild(card);
+      }
+
+      const lim = $('limits'); lim.replaceChildren();
+      if (!s.limits.length) lim.appendChild(item('No limits set.'));
+      for (const l of s.limits) lim.appendChild(item(l.label + ': ' + l.leftMinutes + ' min left', l.usedMinutes + ' of ' + l.dailyMinutes + ' min used'));
+
+      const st = s.stream;
+      $('stream').textContent = 'OBS: ' + st.obs.state + ' · Twitch: ' + st.twitch.state + (st.poll ? ' · Poll: ' + st.poll : '') + (st.giveaway ? ' · Giveaway: ' + st.giveaway : '');
+
+      const act = $('activity'); act.replaceChildren();
+      for (const e of s.activity.slice(0, 25)) act.appendChild(item(e.text, new Date(e.at).toLocaleTimeString() + ' · ' + e.actor + ' · ' + e.status));
+
+      const quick = $('quick'); quick.replaceChildren();
+      const qs = s.canManage ? ['Screen time', 'Limit gaming to 1 hour', 'Close games', 'What apps are running?', 'Summary'] : ['Screen time', 'Summary'];
+      for (const q of qs) {
+        const b = Object.assign(document.createElement('button'), { type: 'button', textContent: q });
+        b.onclick = () => ask(q);
+        quick.appendChild(b);
+      }
+    } catch (e) { $('reply').textContent = e.message; }
+  }
+
+  async function ask(text) {
+    if (!text.trim()) return;
+    $('reply').textContent = 'Thinking...';
+    try {
+      const r = await api('/api/command', { text });
+      $('reply').textContent = r.text;
+    } catch (e) { $('reply').textContent = e.message; }
+    refresh();
+  }
+
+  async function decide(path, id) {
+    try { const o = await api(path, { id }); $('reply').textContent = describe(o); } catch (e) { $('reply').textContent = e.message; }
+    refresh();
+  }
+
+  $('pair-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    $('pair-err').textContent = '';
+    try {
+      const res = await fetch('/api/pair', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code: $('code').value, name: $('dname').value }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Pairing failed.');
+      token = data.token;
+      try { localStorage.setItem(KEY, token); } catch {}
+      show();
+    } catch (err) { $('pair-err').textContent = err.message; }
+  });
+  $('ask-form').addEventListener('submit', (e) => { e.preventDefault(); const v = $('ask').value; $('ask').value = ''; ask(v); });
+  $('stop').addEventListener('click', async () => { try { await api('/api/stop', {}); $('reply').textContent = 'Stopped. Nothing will run until someone says "resume".'; } catch (e) { $('reply').textContent = e.message; } refresh(); });
+  $('unpair').addEventListener('click', forget);
+  setInterval(() => { if (token && !document.hidden) refresh(); }, 10000);
+  show();
+})();
+</script>
+</body>
+</html>

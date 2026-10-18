@@ -2,14 +2,13 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
-    "moduleDetection": "legacy",
+    "moduleDetection": "force",
     "moduleResolution": "Bundler",
-    "lib": ["ES2022", "DOM"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
-    "rootDir": "src/renderer",
-    "outDir": "dist/renderer",
+    "noEmit": true,
     "types": []
   },
   "include": ["src/renderer"]
