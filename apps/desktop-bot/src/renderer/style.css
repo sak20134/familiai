@@ -165,15 +165,16 @@ button.no { border-color: var(--danger); color: var(--danger); }
 #handle span { width: 4px; height: 4px; border-radius: 50%; background: var(--muted); }
 
 #bot {
-  width: 128px;
-  height: 128px;
+  width: 96px;
+  height: 96px;
   padding: 0;
   background: transparent;
   border: 0;
   border-radius: 50%;
   -webkit-app-region: no-drag;
   animation: bob 3.2s ease-in-out infinite;
-  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.35));
+  /* A soft light rim, so a black cat still shows on a dark wallpaper. */
+  filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.55)) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.35));
 }
 #bot:hover { background: transparent; }
 #bot img, #bot svg { width: 100%; height: 100%; object-fit: contain; display: block; }
@@ -189,7 +190,7 @@ button.no { border-color: var(--danger); color: var(--danger); }
 #ask-form button { flex: 0 0 auto; width: 34px; padding: 6px 0; background: rgba(26, 25, 30, 0.95); }
 #ask-form button.danger { color: #fff; background: var(--danger); border-color: var(--danger); }
 
-.eyes { transform-origin: 50% 52%; transform-box: view-box; animation: blink 5s infinite; }
+.eyes { transform-origin: 50% 44%; transform-box: view-box; animation: blink 5s infinite; }
 
 @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 @keyframes poke { 0% { transform: scale(1); } 40% { transform: scale(1.12) rotate(-3deg); } 100% { transform: scale(1); } }

@@ -37,6 +37,7 @@ function drawPixelCat(svg: SVGElement): void {
   const eyes = document.createElementNS(NS, 'g');
   eyes.setAttribute('class', 'eyes');
   const palette = pixelCat.palette as Record<string, string>;
+  svg.setAttribute('viewBox', `0 0 ${pixelCat.rows[0]?.length ?? 16} ${pixelCat.rows.length}`);
   pixelCat.rows.forEach((row, y) => [...row].forEach((ch, x) => {
     const fill = palette[ch];
     if (!fill) return;
