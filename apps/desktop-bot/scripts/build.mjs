@@ -7,7 +7,8 @@ const alias = {
   '@familiai/core': '../../packages/core/src/index.ts',
   '@stream': '../stream-copilot/src',
 };
-const node = { bundle: true, platform: 'node', target: 'node20', format: 'cjs', external: ['electron'], alias, sourcemap: 'linked', logLevel: 'warning' };
+const node = { bundle: true, platform: 'node', target: 'node20', format: 'cjs', // node-llama-cpp has native parts, so it is loaded at runtime instead of bundled.
+  external: ['electron', 'node-llama-cpp'], alias, sourcemap: 'linked', logLevel: 'warning' };
 
 await build({ ...node, entryPoints: ['src/main/main.ts'], outfile: 'dist/main/main.js' });
 await build({ ...node, entryPoints: ['src/preload/preload.ts'], outfile: 'dist/preload/preload.js' });

@@ -1,23 +1,91 @@
 {
   "name": "@familiai/desktop-bot",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Family AI desktop bot: an agentic AI friend on your desktop with a live-stream copilot, family rules and phone control",
   "main": "dist/main/main.js",
   "scripts": {
     "build": "node scripts/build.mjs",
     "start": "npm run build && electron .",
+    "icon": "node scripts/make-icon.mjs",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder",
     "typecheck": "tsc -p tsconfig.main.json && tsc -p tsconfig.renderer.json",
     "test": "vitest run"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",
     "electron": "^44.7.0",
+    "electron-builder": "^26.15.3",
     "esbuild": "^0.28.2",
     "typescript": "^7.0.2",
     "vitest": "^5.0.3"
   },
   "bin": {
     "familyai": "bin/familyai.mjs"
+  },
+  "dependencies": {
+    "node-llama-cpp": "^3.22.2"
+  },
+  "productName": "Family AI Bot",
+  "author": {
+    "name": "Family AI",
+    "email": "sakthivaradharajan2013@gmail.com"
+  },
+  "homepage": "https://github.com/sak20134/familiai",
+  "build": {
+    "appId": "ai.familyai.desktopbot",
+    "productName": "Family AI Bot",
+    "copyright": "Family AI",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json",
+      "!**/*.map",
+      "!node_modules/@node-llama-cpp/*cuda*/**"
+    ],
+    "asarUnpack": [
+      "node_modules/node-llama-cpp/**",
+      "node_modules/@node-llama-cpp/**"
+    ],
+    "icon": "build/icon.png",
+    "extraMetadata": {
+      "main": "dist/main/main.js"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Family AI Bot",
+      "artifactName": "Family-AI-Bot-Setup-${version}.${ext}"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.png"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "executableName": "family-ai-bot",
+      "category": "Utility",
+      "icon": "build/icon.png"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sak20134/familiai"
   }
 }

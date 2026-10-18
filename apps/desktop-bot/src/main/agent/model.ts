@@ -1,11 +1,13 @@
-// Talks to an AI model with tools. Two providers behind one small interface:
-//   anthropic - Claude through the Messages API (needs a key)
-//   ollama    - a free model running on this computer (needs Ollama installed)
+// Talks to an AI model with tools. Three providers behind one small interface:
+//   builtin   - the bot's own brain, running inside the bot (see brain.ts). The default.
+//   anthropic - Claude through the Messages API (optional, needs a key)
+//   ollama    - a model served by Ollama (optional, needs Ollama installed)
 // The model only ever PROPOSES tool calls; the agent decides, through the gate, what really runs.
 
+import { BrainConversation, callFromText, dropNulls, toFunctions, type Brain } from './brain';
 import type { InputSchema } from './types';
 
-export type ProviderName = 'anthropic' | 'ollama';
+export type ProviderName = 'builtin' | 'anthropic' | 'ollama';
 
 export interface ModelConfig {
   provider: ProviderName;
@@ -16,6 +18,8 @@ export interface ModelConfig {
   baseUrl?: string;
   fetchImpl?: typeof fetch;
   timeoutMs?: number;
+  /** The built-in brain (provider "builtin"). */
+  brain?: Brain;
 }
 
 export interface ModelTool {
@@ -46,10 +50,14 @@ export interface Session {
   addResults(results: Array<{ call: ToolCall; content: string }>): void;
 }
 
-export const DEFAULT_MODELS: Record<ProviderName, string> = { anthropic: 'claude-sonnet-5-5', ollama: 'llama3.2' };
+export const DEFAULT_MODELS: Record<ProviderName, string> = { builtin: 'qwen2.5-1.5b-instruct', anthropic: 'claude-sonnet-5-5', ollama: 'llama3.2' };
 const MAX_TOKENS = 800;
 
 export function openSession(cfg: ModelConfig, system: string, history: readonly Turn[], tools: readonly ModelTool[]): Session {
+  if (cfg.provider === 'builtin') {
+    if (!cfg.brain) throw new Error('The built-in brain is not available.');
+    return new BuiltinSession(cfg.brain, system, history, tools);
+  }
   if (cfg.provider === 'anthropic') {
     if (!cfg.apiKey) throw new Error('No Claude key is set. Add it in Settings, or switch to Ollama to run a free model on this computer.');
     return new AnthropicSession(cfg, system, history, tools);
@@ -77,6 +85,41 @@ async function post(cfg: ModelConfig, url: string, headers: Record<string, strin
     throw new Error(`The AI request failed (${res.status}). ${detail}`);
   }
   return res.json();
+}
+
+// --- The bot's own brain ------------------------------------------------------------------
+
+class BuiltinSession implements Session {
+  private readonly conv: BrainConversation;
+  private readonly functions;
+  private readonly names: ReadonlySet<string>;
+  private counter = 0;
+
+  constructor(private readonly brain: Brain, system: string, history: readonly Turn[], tools: readonly ModelTool[]) {
+    this.conv = new BrainConversation(system, history);
+    this.names = new Set(tools.map((t) => t.name));
+    this.functions = tools.length ? toFunctions(tools.map((t) => ({ name: t.name, description: t.description, input: t.input }))) : undefined;
+  }
+
+  async step(): Promise<Step> {
+    if (!this.brain.downloaded) {
+      this.brain.prepare();
+      const s = this.brain.status();
+      throw new Error(s.state === 'error'
+        ? `My brain could not download: ${s.detail} Fixed commands like "close notepad" still work.`
+        : `I'm still getting my brain ready (${s.detail}). Fixed commands like "close notepad" or "switch to BRB" work right now.`);
+    }
+    const engine = await this.brain.ensure();
+    let r = await engine.generate(this.conv.history, this.functions);
+    const asText = r.calls.length === 0 ? callFromText(r.text, this.names) : null;
+    if (asText) r = { text: '', calls: [{ name: asText.name, params: asText.params, raw: undefined }] };
+    this.conv.record(r);
+    return { text: r.text.trim(), calls: r.calls.map((c) => ({ id: `b${++this.counter}`, name: c.name, args: dropNulls(c.params) })) };
+  }
+
+  addResults(results: Array<{ call: ToolCall; content: string }>): void {
+    this.conv.results(results.map((r) => r.content));
+  }
 }
 
 // --- Claude ---------------------------------------------------------------------------------

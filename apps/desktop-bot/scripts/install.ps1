@@ -81,8 +81,9 @@ try {
   Say 'Installing (the first time takes a few minutes)...'
   & $npm ci --no-audit --no-fund
   if ($LASTEXITCODE -ne 0) { throw 'npm could not install the app.' }
-  & $node scripts/build.mjs
-  if ($LASTEXITCODE -ne 0) { throw 'The build failed.' }
+  # Builds the real app, named "Family AI Bot" with its own icon (no admin rights needed).
+  & $npm run pack
+  if ($LASTEXITCODE -ne 0) { throw 'Packaging the app failed.' }
 } finally { Pop-Location }
 
 # --- The familyai command ----------------------------------------------------------------------
@@ -98,6 +99,7 @@ $env:PATH = "$BinDir;$env:PATH"
 
 Write-Host ''
 Say 'Installed. Start it with:  familyai start'
+Say 'First start downloads the bot''s own brain once (about 1 GB).'
 Say 'Check the setup with:      familyai doctor'
 Write-Host ''
 & $cmdFile start

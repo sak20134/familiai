@@ -25,7 +25,8 @@ export const SECRET_NAMES = ['anthropicKey', 'twitchToken', 'obsPassword'] as co
 export type SecretName = (typeof SECRET_NAMES)[number];
 
 export const DEFAULT_CONFIG: BotConfig = {
-  provider: 'none',
+  // The bot's own brain, running inside the bot. Claude and Ollama are optional extras.
+  provider: 'builtin',
   model: '',
   ollamaUrl: 'http://127.0.0.1:11434',
   obsUrl: 'ws://127.0.0.1:4455',
@@ -50,7 +51,7 @@ const port = (v: unknown, fallback: number) => (Number.isInteger(v) && (v as num
 /** Anything from disk or from the page goes through here; unknown or bad fields fall back. */
 export function parseConfig(raw: unknown): BotConfig {
   const o = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
-  const provider = o.provider === 'anthropic' || o.provider === 'ollama' ? o.provider : 'none';
+  const provider = o.provider === 'anthropic' || o.provider === 'ollama' || o.provider === 'none' ? o.provider : 'builtin';
   const ollamaUrl = s(o.ollamaUrl, 200, DEFAULT_CONFIG.ollamaUrl);
   const obsUrl = s(o.obsUrl, 200, DEFAULT_CONFIG.obsUrl);
   return {

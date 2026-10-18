@@ -27,7 +27,7 @@ describe('runtime + familyai command', () => {
 
   beforeAll(async () => {
     home = mkdtempSync(join(tmpdir(), 'rt-'));
-    writeFileSync(join(home, 'config.json'), JSON.stringify({ controlPort: 40000 + Math.floor(Math.random() * 20000) }));
+    writeFileSync(join(home, 'config.json'), JSON.stringify({ controlPort: 40000 + Math.floor(Math.random() * 20000), provider: 'none' }));
     const sys: System = {
       platform: 'linux',
       selfPids: [],

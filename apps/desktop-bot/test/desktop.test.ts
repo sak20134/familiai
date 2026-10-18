@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { closeApp, isProtected, launchName, matchProcesses, normalizeName, openApp, parsePs, parseTasklist, type ProcInfo, type System } from '../src/main/desktop/apps';
+import { closeApp, runningApps, isProtected, launchName, matchProcesses, normalizeName, openApp, parsePs, parseTasklist, type ProcInfo, type System } from '../src/main/desktop/apps';
 import { escapeSendKeys, parseCombo, sendKeysCombo, TakeOver, xdotoolCombo } from '../src/main/desktop/takeover';
 import { checkUrl, readPage } from '../src/main/desktop/web';
 
@@ -38,6 +38,11 @@ describe('process lists', () => {
     expect(matchProcesses('VS Code', procs).map((p) => p.pid)).toEqual([3]);
     expect(matchProcesses('obs', procs).map((p) => p.pid)).toEqual([4]);
     expect(matchProcesses('co', procs)).toEqual([]); // too short to guess
+  });
+  it('lists only real apps', async () => {
+    const { sys } = fakeSystem('linux', [{ pid: 1, name: 'discord' }, { pid: 2, name: 'bash' }, { pid: 3, name: 'systemd-logind' }, { pid: 4, name: 'obs' }, { pid: 5, name: 'family-ai-bot' }]);
+    expect(await runningApps({ ...sys, selfName: 'family-ai-bot' })).toEqual(['discord', 'obs']);
+    expect((await closeApp('family-ai-bot', { ...sys, selfName: 'family-ai-bot' })).text).toMatch(/not running/);
   });
   it('protects system processes', () => {
     expect(isProtected('explorer.exe')).toBe(true);

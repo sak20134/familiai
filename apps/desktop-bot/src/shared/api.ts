@@ -53,7 +53,7 @@ export interface LinkView {
 }
 
 export interface ConfigView {
-  provider: 'anthropic' | 'ollama' | 'none';
+  provider: 'builtin' | 'anthropic' | 'ollama' | 'none';
   model: string;
   ollamaUrl: string;
   obsUrl: string;
@@ -78,6 +78,7 @@ export interface BotState {
   canApprove: boolean;
   canManage: boolean;
   modelReady: boolean;
+  brain: { state: 'missing' | 'downloading' | 'asleep' | 'loading' | 'ready' | 'error'; detail: string; progress?: number };
   aiMode: boolean;
   stopped: boolean;
   takeover: { active: boolean; until: number; by: string };

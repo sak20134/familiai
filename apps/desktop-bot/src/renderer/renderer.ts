@@ -2,6 +2,7 @@
 
 import type { BotState, OutcomeView, ReplyView, Role } from '../shared/api';
 import { removeBackgroundPixels } from './bg';
+import pixelCat from './pixelcat.json';
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string): T => {
   const e = document.getElementById(id);
@@ -29,6 +30,27 @@ const ask = $<HTMLInputElement>('ask');
 const menuBtn = $<HTMLButtonElement>('btn-menu');
 
 let state: BotState | null = null;
+
+/** Draws the built-in pixel cat (one square per pixel). Eye pixels go in their own group so they blink. */
+function drawPixelCat(svg: SVGElement): void {
+  const NS = 'http://www.w3.org/2000/svg';
+  const eyes = document.createElementNS(NS, 'g');
+  eyes.setAttribute('class', 'eyes');
+  const palette = pixelCat.palette as Record<string, string>;
+  pixelCat.rows.forEach((row, y) => [...row].forEach((ch, x) => {
+    const fill = palette[ch];
+    if (!fill) return;
+    const r = document.createElementNS(NS, 'rect');
+    r.setAttribute('x', String(x));
+    r.setAttribute('y', String(y));
+    r.setAttribute('width', '1.02'); // a hair wider, so no seams show between squares
+    r.setAttribute('height', '1.02');
+    r.setAttribute('fill', fill);
+    (ch === 'E' || ch === 'e' ? eyes : svg).appendChild(r);
+  }));
+  svg.appendChild(eyes);
+}
+drawPixelCat(botCat);
 let speechTimer: number | undefined;
 const recent: Array<{ you: string; reply: ReplyView }> = [];
 
@@ -134,7 +156,8 @@ function pill(node: HTMLElement, s: { state: string; detail: string }, detail: H
 
 function renderPanel(s: BotState): void {
   // Home
-  const parts = [s.modelReady ? `AI: ${s.config.provider === 'ollama' ? 'Ollama' : 'Claude'}` : 'AI: not set up (fixed commands only)', s.aiMode ? 'AI Mode ON' : 'asks before medium-risk actions'];
+  const brain = s.config.provider === 'builtin' ? `Brain: ${s.brain.detail}` : s.modelReady ? `AI: ${s.config.provider === 'ollama' ? 'Ollama' : 'Claude'}` : 'AI: not set up (fixed commands only)';
+  const parts = [brain, s.aiMode ? 'AI Mode ON' : 'asks before medium-risk actions'];
   $('status-line').textContent = parts.join(' · ');
   const pl = $('pending-list');
   pl.replaceChildren(...(s.pending.length ? s.pending.map((p) => {
@@ -232,6 +255,8 @@ function fillSettings(s: BotState): void {
 
 function showProviderRows(): void {
   const p = $<HTMLSelectElement>('cfg-provider').value;
+  $('row-model').hidden = p === 'builtin' || p === 'none';
+  $('brain-note').textContent = p === 'builtin' ? `My own brain (Qwen2.5 1.5B, open-source) runs on this computer: nothing you say leaves it. ${state?.brain.detail ?? ''}` : '';
   $('row-key').hidden = p !== 'anthropic';
   $('row-ollama').hidden = p !== 'ollama';
 }
@@ -386,5 +411,9 @@ window.bot.onEvent((e) => {
 
 void refresh().then(() => {
   if (!state) return;
-  say(`Hi, I'm ${state.settings.botName}! ${state.modelReady ? 'Ask me anything.' : 'Open ☰ › Settings to give me an AI brain.'}`);
+  const b = state.brain;
+  const extra = state.config.provider !== 'builtin' ? (state.modelReady ? 'Ask me anything.' : 'Open ☰ › Settings to give me a brain.')
+    : b.state === 'downloading' || b.state === 'missing' ? 'I\'m downloading my brain the first time (about 1 GB). Simple commands work already.'
+    : 'Ask me anything.';
+  say(`Hi, I'm ${state.settings.botName}! ${extra}`);
 });

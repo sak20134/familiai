@@ -39,7 +39,8 @@ APP="$HOME_DIR/apps/desktop-bot"
 cd "$APP"
 say "Installing (the first time takes a few minutes)..."
 npm ci --no-audit --no-fund
-node scripts/build.mjs
+# Builds the real app, named "Family AI Bot" with its own icon.
+npm run pack
 
 mkdir -p "$BIN_DIR"
 chmod +x "$APP/bin/familyai.mjs"
@@ -60,6 +61,7 @@ fi
 
 printf '\n'
 say "Installed. Start it with:  familyai start"
+say "First start downloads the bot's own brain once (about 1 GB)."
 say "Check the setup with:      familyai doctor"
 printf '\n'
 "$BIN_DIR/familyai" start || true

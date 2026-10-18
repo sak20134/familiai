@@ -125,7 +125,7 @@ describe('config', () => {
   const cipher: Cipher = { available: () => true, encrypt: (t) => Buffer.from(t.split('').reverse().join('')), decrypt: (b) => b.toString().split('').reverse().join('') };
   it('cleans bad values', () => {
     expect(parseConfig(null)).toEqual(DEFAULT_CONFIG);
-    expect(parseConfig({ provider: 'evil', obsUrl: 'javascript:x', phonePort: 80, twitchChannel: '#My_Chan!' })).toMatchObject({ provider: 'none', obsUrl: DEFAULT_CONFIG.obsUrl, phonePort: 47778, twitchChannel: 'my_chan' });
+    expect(parseConfig({ provider: 'evil', obsUrl: 'javascript:x', phonePort: 80, twitchChannel: '#My_Chan!' })).toMatchObject({ provider: 'builtin', obsUrl: DEFAULT_CONFIG.obsUrl, phonePort: 47778, twitchChannel: 'my_chan' });
   });
   it('encrypts secrets, never stores them in config.json, and reports only flags', () => {
     const c = new ConfigStore(dir, cipher);

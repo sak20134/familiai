@@ -35,16 +35,31 @@ familyai doctor            check the setup
 familyai update            get the newest version
 ```
 
-Already have the code? In this folder: `npm install`, then `npm start`.
+Already have the code? In this folder: `npm install`, then `npm start` (or `npm run pack` to build
+the real "Family AI Bot" app with its own name and icon, which `familyai start` then uses).
 
-## Give it a brain
+## The app and its icon
 
-Open **☰ › Settings › AI brain**:
+The installers build the bot as its own program, **Family AI Bot**, with an original pixel-cat
+icon (drawn by `scripts/make-icon.mjs` from `src/renderer/pixelcat.json`; the same cat floats on
+your desktop). Task Manager and the firewall show "Family AI Bot". `npm run dist` makes a full
+installer (`.exe`, `.dmg` or `.AppImage`) in `release/`.
 
-- **Ollama**: free, runs on your own computer. Install it from ollama.com, run `ollama pull llama3.2`, pick Ollama.
-- **Claude**: pick Claude and paste your key. Keys are encrypted by your operating system.
+The app is not code-signed yet, so Windows shows "Unknown publisher" and SmartScreen may ask once.
+Showing your own name as publisher needs a paid code-signing certificate.
 
-Without a brain the bot still does fixed commands (below), fast and free.
+## Its own brain
+
+The bot thinks with its own built-in brain: a small open-source AI model (Qwen2.5 1.5B Instruct,
+Apache-2.0 license) that runs inside the bot on your computer. It needs no Ollama, no Claude and
+no internet, and nothing you say leaves your computer.
+
+- The first start downloads it once (about 1 GB, into `~/.familyai/models`). The download resumes
+  if it stops, and it is checked against the official checksum before it is used.
+- It uses your graphics card when it can (NVIDIA, AMD or Intel through Vulkan), otherwise the processor.
+- Answers take a few seconds on a normal laptop. It is smaller than Claude, so for hard questions
+  you can still pick Claude or Ollama in **☰ › Settings › AI brain** (optional).
+- Fixed commands (below) work instantly, even while the brain is downloading.
 
 ## What you can say
 
@@ -97,6 +112,7 @@ screen time and the activity log. Keys are in `secrets.bin`, encrypted by your o
 ## Known limits
 
 - Take-over types and presses keys, but cannot see the screen yet.
+- The built-in brain needs about 2 GB of free memory while it runs.
 - Voice: the bot can speak replies (Settings), but cannot listen yet.
 - macOS: take-over needs Accessibility permission. Linux: take-over needs `xdotool`; transparent
   windows need a compositor.

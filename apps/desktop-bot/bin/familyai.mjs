@@ -75,9 +75,22 @@ function printReply(r) {
   for (const o of r.outcomes ?? []) if (o.kind !== 'done' || !r.text.includes(o.text)) console.log(outcomeLine(o));
 }
 
+/** The packaged app ("Family AI Bot", own name and icon), when it has been built. */
+function packagedApp() {
+  const release = join(APP_DIR, 'release');
+  const candidates = process.platform === 'win32'
+    ? [join(release, 'win-unpacked', 'Family AI Bot.exe')]
+    : process.platform === 'darwin'
+      ? ['mac-arm64', 'mac', 'mac-universal'].map((d) => join(release, d, 'Family AI Bot.app', 'Contents', 'MacOS', 'Family AI Bot'))
+      : [join(release, 'linux-unpacked', 'family-ai-bot')];
+  return candidates.find((p) => existsSync(p)) ?? null;
+}
+
 async function start() {
   const s = await running();
   if (s) return console.log(`${s.botName} is already running.`);
+  const packaged = packagedApp();
+  if (packaged) return launch(packaged, []);
   if (!existsSync(join(APP_DIR, 'dist', 'main', 'main.js'))) {
     console.log('Building the bot (first time only)...');
     const b = spawnSync(process.execPath, ['scripts/build.mjs'], { cwd: APP_DIR, stdio: 'inherit' });
@@ -90,9 +103,13 @@ async function start() {
   } catch {
     throw new Error('Electron is not installed. Run "familyai update" or "npm install" in the app folder.');
   }
+  return launch(electron, [APP_DIR]);
+}
+
+async function launch(file, args) {
   const env = { ...process.env };
   delete env.ELECTRON_RUN_AS_NODE; // when set, Electron runs as plain Node and no window opens
-  const child = spawn(electron, [APP_DIR], { detached: true, stdio: 'ignore', env, windowsHide: false });
+  const child = spawn(file, args, { detached: true, stdio: 'ignore', env, windowsHide: false });
   child.unref();
   process.stdout.write('Starting');
   for (let i = 0; i < 40; i++) {
@@ -101,7 +118,7 @@ async function start() {
     const now = await running();
     if (now) {
       console.log(green(` ${now.botName} is running.`));
-      if (!now.modelReady) console.log(dim('  No AI brain yet: open the bot\'s ☰ › Settings, or use fixed commands like "close notepad".'));
+      if (now.brain && (now.brain.state === 'missing' || now.brain.state === 'downloading')) console.log(dim('  First start: the bot is downloading its brain (about 1 GB, once). Fixed commands work already.'));
       return;
     }
   }
@@ -113,7 +130,8 @@ async function status() {
   const s = await running();
   if (!s) return console.log(`Not running. Start it with ${amber('familyai start')}.`);
   console.log(`${green('●')} ${s.botName} is running ${dim(`(you: ${s.you.name}, ${s.you.role})`)}`);
-  console.log(`  AI brain:   ${s.modelReady ? 'ready' : 'not set up (fixed commands only)'}${s.aiMode ? amber('  · AI Mode ON') : ''}`);
+  const brain = s.brain && s.modelReady && s.brain.state !== 'ready' && s.brain.state !== 'asleep' ? s.brain.detail : s.modelReady ? 'ready' : 'not set up (fixed commands only)';
+  console.log(`  AI brain:   ${brain}${s.aiMode ? amber('  · AI Mode ON') : ''}`);
   console.log(`  Safety:     ${s.stopped ? red('STOPPED (say "resume")') : 'normal'}${s.takeover.active ? red(`  · TAKE-OVER on until ${new Date(s.takeover.until).toLocaleTimeString()}`) : ''}`);
   console.log(`  Stream:     OBS ${s.stream.obs.state}, Twitch ${s.stream.twitch.state}`);
   console.log(`  Phones:     ${s.phone.running ? `on  ${s.phone.urls.join('  ')}` : 'off'}`);
@@ -157,11 +175,11 @@ async function doctor() {
   ok(major >= 20, `Node.js ${process.versions.node}`, 'install Node.js 20 or newer from nodejs.org');
   ok(existsSync(join(APP_DIR, 'node_modules', 'electron')), 'Electron installed', `run "npm install" in ${APP_DIR}`);
   ok(existsSync(join(APP_DIR, 'dist', 'main', 'main.js')), 'Bot built', 'run "familyai update"');
+  const packaged = packagedApp();
+  console.log(`${packaged ? green('✓') : dim('-')} ${packaged ? 'Packaged as "Family AI Bot"' : 'Not packaged yet (runs as Electron; "npm run pack" in the app folder fixes the name)'}`);
   const s = await running();
   ok(Boolean(s), 'Bot running', 'run "familyai start"');
-  if (s) ok(s.modelReady, 'AI brain set up', 'open ☰ › Settings in the bot and pick Claude or Ollama');
-  const ollama = await portOpen(11434);
-  console.log(`${ollama ? green('✓') : dim('-')} Ollama ${ollama ? 'is running (free local AI)' : 'not running (optional: ollama.com)'}`);
+  if (s) ok(s.modelReady && s.brain?.state !== 'error', `AI brain: ${s.brain?.detail ?? (s.modelReady ? 'ready' : 'none')}`, 'open ☰ › Settings in the bot');
   const obs = await portOpen(4455);
   console.log(`${obs ? green('✓') : dim('-')} OBS WebSocket ${obs ? 'reachable on port 4455' : 'not reachable (optional: OBS › Tools › WebSocket Server Settings)'}`);
   if (process.platform === 'linux') {
@@ -175,7 +193,7 @@ function update() {
   const root = dirname(dirname(APP_DIR));
   const installer = process.platform === 'win32' ? join(APP_DIR, 'scripts', 'install.ps1') : join(APP_DIR, 'scripts', 'install.sh');
   if (existsSync(join(root, '.git'))) {
-    const steps = [['git', ['-C', root, 'pull', '--ff-only']], ['npm', ['ci', '--no-audit', '--no-fund']], [process.execPath, ['scripts/build.mjs']]];
+    const steps = [['git', ['-C', root, 'pull', '--ff-only']], ['npm', ['ci', '--no-audit', '--no-fund']], ['npm', ['run', 'pack']]];
     for (const [cmd, args] of steps) {
       const r = spawnSync(cmd, args, { cwd: APP_DIR, stdio: 'inherit', shell: process.platform === 'win32' && cmd === 'npm' });
       if (r.status !== 0) throw new Error(`"${cmd} ${args.join(' ')}" failed.`);

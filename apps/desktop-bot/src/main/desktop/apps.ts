@@ -21,6 +21,8 @@ export interface System {
   sleep(ms: number): Promise<void>;
   /** Our own process ids, which we never close. */
   selfPids: readonly number[];
+  /** Our own program name (the bot runs as several processes); never listed or closed. */
+  selfName?: string;
 }
 
 export function normalizeName(raw: string): string {
@@ -50,7 +52,8 @@ export function parsePs(text: string): ProcInfo[] {
 
 export async function listProcesses(sys: System): Promise<ProcInfo[]> {
   if (sys.platform === 'win32') return parseTasklist((await sys.exec('tasklist', ['/fo', 'csv', '/nh'])).stdout);
-  const args = sys.platform === 'darwin' ? ['-axo', 'pid=,comm='] : ['-eo', 'pid=,comm='];
+  // On Linux, leave out the kernel's own threads (children of process 2): they are not apps.
+  const args = sys.platform === 'darwin' ? ['-axo', 'pid=,comm='] : ['--ppid', '2', '-p', '2', '--deselect', '-o', 'pid=,comm='];
   return parsePs((await sys.exec('ps', args)).stdout);
 }
 
@@ -102,7 +105,7 @@ export function matchProcesses(query: string, procs: readonly ProcInfo[]): ProcI
 export async function closeApp(query: string, sys: System, force = false): Promise<ToolResult> {
   const label = query.trim();
   if (!label) return fail('Which app should I close?');
-  const found = matchProcesses(label, await listProcesses(sys)).filter((p) => !sys.selfPids.includes(p.pid));
+  const found = matchProcesses(label, await listProcesses(sys)).filter((p) => !sys.selfPids.includes(p.pid) && p.name !== sys.selfName);
   if (found.length === 0) return fail(`${label} is not running.`);
   const guarded = found.find((p) => isProtected(p.name));
   if (guarded) return fail(`${guarded.name} is part of the system. Closing it could crash the computer, so I won't.`);
@@ -172,10 +175,27 @@ export async function openApp(app: string, sys: System): Promise<ToolResult> {
   return running ? ok(`Opened ${label}.`) : ok(`Asked the computer to open ${label}. I can't see it running yet; it may still be starting.`, false);
 }
 
+const HIDDEN = /^(conhost|dllhost|backgroundtaskhost|smartscreen|wmiprvse|audiodg|spoolsv|textinputhost|applicationframehost|systemsettings|bash|zsh|sh|fish|ps|node|sleep|cat|login|sudo|xvfb-run|xvfb|xorg|systemd-.*|dbus-.*|.*-daemon|process_api)$/;
+
+/** Apps a person would call "open": windowed apps on Windows, foreground apps on a Mac. */
 export async function runningApps(sys: System, limit = 40): Promise<string[]> {
   const names = new Set<string>();
-  for (const p of await listProcesses(sys)) {
-    if (!isProtected(p.name) && !sys.selfPids.includes(p.pid) && !/^(conhost|dllhost|backgroundtaskhost|smartscreen|wmiprvse|audiodg|spoolsv|kworker.*|ksoftirqd.*|rcu_.*|migration.*)$/.test(p.name)) names.add(p.name);
+  try {
+    if (sys.platform === 'win32') {
+      const out = await sys.exec('powershell', ['-NoProfile', '-NonInteractive', '-Command', 'Get-Process | Where-Object { $_.MainWindowTitle } | Select-Object -ExpandProperty ProcessName']);
+      for (const n of out.stdout.split(/\r?\n/)) if (n.trim()) names.add(normalizeName(n));
+    } else if (sys.platform === 'darwin') {
+      const out = await sys.exec('osascript', ['-e', 'tell application "System Events" to get name of every process whose background only is false']);
+      for (const n of out.stdout.split(',')) if (n.trim()) names.add(normalizeName(n));
+    }
+  } catch {
+    // fall back to the full process list below
   }
+  if (names.size === 0) {
+    for (const p of await listProcesses(sys)) {
+      if (!isProtected(p.name) && !sys.selfPids.includes(p.pid) && !HIDDEN.test(p.name)) names.add(p.name);
+    }
+  }
+  for (const n of names) if (isProtected(n) || n === sys.selfName) names.delete(n);
   return [...names].sort().slice(0, limit);
 }

@@ -9,6 +9,7 @@ import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { networkInterfaces } from 'node:os';
 import { join } from 'node:path';
 import { ActivityLog } from './agent/activity';
+import { Brain } from './agent/brain';
 import { Agent } from './agent/agent';
 import { canApprove, Gate } from './agent/gate';
 import { MemoryStore } from './agent/memory';
@@ -16,7 +17,7 @@ import { DEFAULT_MODELS, type ModelConfig } from './agent/model';
 import { PLANNERS } from './agent/planners';
 import type { Actor, Outcome, Reply } from './agent/types';
 import { ConfigStore, type Cipher } from './config';
-import { closeApp, listProcesses, type System } from './desktop/apps';
+import { closeApp, listProcesses, normalizeName, type System } from './desktop/apps';
 import { TakeOver } from './desktop/takeover';
 import { desktopTools } from './desktop/tools';
 import { Family } from './family/family';
@@ -64,6 +65,7 @@ export function realSystem(): System {
     },
     sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
     selfPids: [process.pid, process.ppid],
+    selfName: normalizeName(process.execPath),
   };
 }
 
@@ -79,6 +81,7 @@ export class Runtime {
   readonly agent: Agent;
   readonly remote: RemoteServer;
   readonly sys: System;
+  readonly brain: Brain;
   private phoneError: string | null = null;
   private screenTimer: ReturnType<typeof setInterval> | null = null;
   private lastScreenTick = Date.now();
@@ -92,6 +95,17 @@ export class Runtime {
     this.env = d.env ?? process.env;
     this.sys = d.sys ?? realSystem();
     this.config = new ConfigStore(d.dataDir, d.cipher);
+    let lastReport = '';
+    this.brain = new Brain({
+      dir: join(d.dataDir, 'models'),
+      onStatus: (s) => {
+        if (s.state === 'ready') d.say('My brain is awake. Ask me anything!');
+        if (s.state === 'error') this.log.add('safety', 'failed', 'Bot', `Brain: ${s.detail}`);
+        // Refresh the window at most once per percent while downloading.
+        const key = `${s.state}:${Math.floor((s.progress ?? 0) * 100)}`;
+        if (key !== lastReport) { lastReport = key; d.changed(); }
+      },
+    });
     this.family = new Family(join(d.dataDir, 'family.json'), d.ownerName);
     this.log = new ActivityLog(join(d.dataDir, 'activity.jsonl'));
     this.memory = new MemoryStore(join(d.dataDir, 'memory.json'));
@@ -122,6 +136,8 @@ export class Runtime {
       external: this.stream.external(),
       onStop: () => this.takeover.stop(),
       status: () => this.statusLines(),
+      // A small brain chooses better from fewer tools: stream tools only while a stream is set up.
+      toolFilter: (t) => !t.spec.name.startsWith('stream_') || this.streamActive(),
     });
     this.cliFile = join(d.dataDir, 'cli.json');
     this.remote = new RemoteServer({
@@ -152,6 +168,7 @@ export class Runtime {
     } catch (err) {
       this.log.add('safety', 'failed', 'Bot', `The terminal command channel could not start: ${(err as Error).message}`);
     }
+    if (cfg.provider === 'builtin') this.brain.prepare();
     if (cfg.phoneControl) await this.setPhoneControl(true);
     if (cfg.autoConnectStream) void this.connectStream();
     this.screenTimer = setInterval(() => void this.screenTick(), SCREEN_TICK_MS);
@@ -163,6 +180,7 @@ export class Runtime {
     this.takeover.stop();
     this.stream.disconnect();
     await this.remote.close();
+    await this.brain.close().catch(() => undefined);
     try {
       const saved = existsSync(this.cliFile) ? (JSON.parse(readFileSync(this.cliFile, 'utf8')) as { pid?: number }) : {};
       if (saved.pid === process.pid) rmSync(this.cliFile, { force: true });
@@ -173,6 +191,7 @@ export class Runtime {
 
   modelConfig(): ModelConfig | null {
     const c = this.config.get();
+    if (c.provider === 'builtin') return { provider: 'builtin', model: DEFAULT_MODELS.builtin, brain: this.brain };
     if (c.provider === 'anthropic') {
       const apiKey = this.config.secret('anthropicKey') ?? this.env.ANTHROPIC_API_KEY;
       return apiKey ? { provider: 'anthropic', model: c.model || this.env.FAMILYAI_MODEL || DEFAULT_MODELS.anthropic, apiKey } : null;
@@ -255,6 +274,7 @@ export class Runtime {
       canApprove: canApprove(actor, 'high'),
       canManage: isParent,
       modelReady: this.modelConfig() !== null,
+      brain: this.brain.status(),
       aiMode: this.gate.aiMode,
       stopped: this.gate.stopped,
       takeover: this.takeover.state(),
@@ -266,6 +286,11 @@ export class Runtime {
       activity: visibleActivity(actor, this.log.recent(60)),
       phone: { running: this.remote.phoneRunning(), urls: isParent ? this.phoneUrls() : [], error: this.phoneError, pairing: null },
     };
+  }
+
+  private streamActive(): boolean {
+    const s = this.stream.status();
+    return s.obs.state !== 'off' || s.twitch.state !== 'off';
   }
 
   private statusLines(): string[] {
