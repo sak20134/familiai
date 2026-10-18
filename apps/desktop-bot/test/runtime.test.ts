@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { ProcInfo, System } from '../src/main/desktop/apps';
+import { Brain } from '../src/main/agent/brain';
 import { Runtime } from '../src/main/runtime';
 
 const CLI = join(__dirname, '..', 'bin', 'familyai.mjs');
@@ -27,7 +28,7 @@ describe('runtime + familyai command', () => {
 
   beforeAll(async () => {
     home = mkdtempSync(join(tmpdir(), 'rt-'));
-    writeFileSync(join(home, 'config.json'), JSON.stringify({ controlPort: 40000 + Math.floor(Math.random() * 20000), provider: 'none' }));
+    writeFileSync(join(home, 'config.json'), JSON.stringify({ controlPort: 40000 + Math.floor(Math.random() * 20000) }));
     const sys: System = {
       platform: 'linux',
       selfPids: [],
@@ -48,6 +49,8 @@ describe('runtime + familyai command', () => {
       quit: () => {},
       sys,
       env: {},
+      // A brain that is never set up here: these tests use fixed commands only, and must not download.
+      brain: new Brain({ dir: join(home, 'models'), fetchImpl: (() => new Promise(() => {})) as unknown as typeof fetch }),
     });
     await rt.start();
   });
@@ -59,7 +62,7 @@ describe('runtime + familyai command', () => {
   it('reports status', async () => {
     const r = await cli(home, 'status');
     expect(r.out).toContain('Milo is running');
-    expect(r.out).toContain('not set up');
+    expect(r.out).toMatch(/AI brain/);
   });
 
   it('a parent sets a limit and closes games from the terminal', async () => {

@@ -6,7 +6,9 @@ import { ActivityLog, redact } from '../src/main/agent/activity';
 import { Agent, describe as describeOutcome, forModel } from '../src/main/agent/agent';
 import { canApprove, Gate } from '../src/main/agent/gate';
 import { MemoryStore } from '../src/main/agent/memory';
-import { parseAnthropic, parseOllama } from '../src/main/agent/model';
+import { Brain, type Engine, type GenerateResult } from '../src/main/agent/brain';
+import { createHash } from 'node:crypto';
+import { writeFileSync } from 'node:fs';
 import { desktopPlanner, familyPlanner, PLANNERS, streamPlanner } from '../src/main/agent/planners';
 import { ok, type Actor, type ToolDef } from '../src/main/agent/types';
 
@@ -158,16 +160,18 @@ describe('agent', () => {
     expect((await a.handle('pending', owner)).text).toMatch(/Nothing/);
   });
 
-  it('never lets the AI model claim something that is only waiting', async () => {
-    let call = 0;
-    const fetchImpl = (async () => {
-      call++;
-      const body = call === 1
-        ? { content: [{ type: 'tool_use', id: 't1', name: 'close', input: {} }] }
-        : { content: [{ type: 'text', text: 'All done, I closed it!' }] };
-      return new Response(JSON.stringify(body), { status: 200 });
-    }) as typeof fetch;
-    const a = make([tool('close', 'medium')], () => ({ provider: 'anthropic', model: 'm', apiKey: 'sk-test', fetchImpl }));
+  it('never lets the brain claim something that is only waiting', async () => {
+    const answers: GenerateResult[] = [
+      { text: '', calls: [{ name: 'close', params: {}, raw: undefined }] },
+      { text: 'All done, I closed it!', calls: [] },
+    ];
+    const bytes = Buffer.from('weights');
+    const spec = { name: 't', file: 't.gguf', url: 'https://example.com/t', size: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex'), license: 'x' };
+    writeFileSync(join(dir, 't.gguf'), bytes);
+    writeFileSync(join(dir, 't.gguf.ok'), spec.sha256);
+    const engine: Engine = { generate: async () => answers.shift()!, close: async () => {} };
+    const brain = new Brain({ dir, spec, loader: async () => engine });
+    const a = make([tool('close', 'medium')], () => ({ brain }));
     const r = await a.handle('please shut that thing for me', owner);
     expect(r.outcomes[0]?.kind).toBe('needs_approval');
     expect(r.text).toContain('Waiting for your OK');
@@ -177,29 +181,6 @@ describe('agent', () => {
     expect(forModel({ kind: 'needs_approval', tool: 'x', id: 'a1', summary: 'Ban bob' })).toMatch(/^WAITING.*NOT happened/);
     expect(forModel({ kind: 'done', tool: 'x', text: 'ok', verified: false })).toMatch(/not independently confirmed/);
     expect(describeOutcome({ kind: 'done', tool: 'x', text: 'Typed.', verified: false })).toMatch(/could not double-check/);
-  });
-});
-
-describe('model replies', () => {
-  it('reads Claude text and tool calls', () => {
-    expect(parseAnthropic([{ type: 'text', text: 'Hi ' }, { type: 'tool_use', id: 'a', name: 'open_app', input: { app: 'obs' } }, { type: 'junk' }])).toEqual({ text: 'Hi', calls: [{ id: 'a', name: 'open_app', args: { app: 'obs' } }] });
-  });
-  it('reads Ollama tool calls, even with string arguments, and drops <think> text', () => {
-    let n = 0;
-    const s = parseOllama({ role: 'assistant', content: '<think>hmm</think>Sure.', tool_calls: [{ function: { name: 'list_apps', arguments: '{"a":1}' } }, { function: { name: 'x', arguments: 'nope' } }] }, () => `c${++n}`);
-    expect(s).toEqual({ text: 'Sure.', calls: [{ id: 'c1', name: 'list_apps', args: { a: 1 } }, { id: 'c2', name: 'x', args: {} }] });
-  });
-  it('sends the Claude key only in a header and never shows it in errors', async () => {
-    let seen: RequestInit | undefined;
-    const fetchImpl = (async (_u: unknown, init?: RequestInit) => { seen = init; return new Response('bad key sk-secret-123', { status: 401 }); }) as typeof fetch;
-    const dir = mkdtempSync(join(tmpdir(), 'm-'));
-    const a = new Agent({ tools: [], planners: [], gate: new Gate(), log: new ActivityLog(join(dir, 'a')), memory: new MemoryStore(join(dir, 'm')), model: () => ({ provider: 'anthropic', model: 'm', apiKey: 'sk-secret-123', fetchImpl }), botName: () => 'Milo' });
-    const r = await a.handle('hello there friend', owner);
-    expect((seen?.headers as Record<string, string>)['x-api-key']).toBe('sk-secret-123');
-    expect(String(seen?.body)).not.toContain('sk-secret-123');
-    expect(r.text).toContain('401');
-    expect(r.text).not.toContain('sk-secret-123');
-    rmSync(dir, { recursive: true, force: true });
   });
 });
 

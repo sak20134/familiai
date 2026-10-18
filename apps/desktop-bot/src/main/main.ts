@@ -20,7 +20,7 @@ const COMPACT = { w: 300, h: 430 };
 const EXPANDED = { w: 420, h: 680 };
 const STOP_SHORTCUT = 'CommandOrControl+Alt+S';
 
-// One fixed home for the bot's data, like Ollama's ~/.ollama, so the terminal command finds it.
+// One fixed home for the bot's data (~/.familyai), so the terminal command always finds it.
 app.setPath('userData', process.env.FAMILYAI_HOME || join(homedir(), '.familyai'));
 
 let win: BrowserWindow | null = null;

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// familyai: start, stop and talk to the desktop bot from a terminal, like `ollama`.
+// familyai: start, stop and talk to the desktop bot from a terminal.
 //
 //   familyai start            start the bot (it floats on your desktop)
 //   familyai stop             close the bot
@@ -118,7 +118,7 @@ async function launch(file, args) {
     const now = await running();
     if (now) {
       console.log(green(` ${now.botName} is running.`));
-      if (now.brain && (now.brain.state === 'missing' || now.brain.state === 'downloading')) console.log(dim('  First start: the bot is downloading its brain (about 1 GB, once). Fixed commands work already.'));
+      if (now.brain && (now.brain.state === 'missing' || now.brain.state === 'downloading')) console.log(dim('  The bot is finishing setting up its brain. Fixed commands work already.'));
       return;
     }
   }
@@ -193,7 +193,7 @@ function update() {
   const root = dirname(dirname(APP_DIR));
   const installer = process.platform === 'win32' ? join(APP_DIR, 'scripts', 'install.ps1') : join(APP_DIR, 'scripts', 'install.sh');
   if (existsSync(join(root, '.git'))) {
-    const steps = [['git', ['-C', root, 'pull', '--ff-only']], ['npm', ['ci', '--no-audit', '--no-fund']], ['npm', ['run', 'pack']]];
+    const steps = [['git', ['-C', root, 'pull', '--ff-only']], ['npm', ['ci', '--no-audit', '--no-fund']], ['npm', ['run', 'pack']], [process.execPath, ['dist/setup-brain.js']]];
     for (const [cmd, args] of steps) {
       const r = spawnSync(cmd, args, { cwd: APP_DIR, stdio: 'inherit', shell: process.platform === 'win32' && cmd === 'npm' });
       if (r.status !== 0) throw new Error(`"${cmd} ${args.join(' ')}" failed.`);

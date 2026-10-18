@@ -157,7 +157,7 @@ function pill(node: HTMLElement, s: { state: string; detail: string }, detail: H
 
 function renderPanel(s: BotState): void {
   // Home
-  const brain = s.config.provider === 'builtin' ? `Brain: ${s.brain.detail}` : s.modelReady ? `AI: ${s.config.provider === 'ollama' ? 'Ollama' : 'Claude'}` : 'AI: not set up (fixed commands only)';
+  const brain = `Brain: ${s.brain.detail}`;
   const parts = [brain, s.aiMode ? 'AI Mode ON' : 'asks before medium-risk actions'];
   $('status-line').textContent = parts.join(' · ');
   const pl = $('pending-list');
@@ -234,14 +234,11 @@ function renderPanel(s: BotState): void {
 function fillSettings(s: BotState): void {
   const c = s.config;
   const set = (id: string, v: string) => { $<HTMLInputElement>(id).value = v; };
-  $<HTMLSelectElement>('cfg-provider').value = c.provider;
-  set('cfg-model', c.model);
-  set('cfg-ollama', c.ollamaUrl);
   set('cfg-obs', c.obsUrl);
   set('cfg-tw-id', c.twitchClientId);
   set('cfg-tw-channel', c.twitchChannel);
   set('bot-name', s.settings.botName);
-  for (const [id, name] of [['cfg-key', 'anthropicKey'], ['cfg-obs-pass', 'obsPassword'], ['cfg-tw-token', 'twitchToken']] as const) {
+  for (const [id, name] of [['cfg-obs-pass', 'obsPassword'], ['cfg-tw-token', 'twitchToken']] as const) {
     const input = $<HTMLInputElement>(id);
     input.value = '';
     input.placeholder = s.secrets[name] ? 'saved (type to replace, or "-" to remove)' : 'not set';
@@ -251,15 +248,11 @@ function fillSettings(s: BotState): void {
   $<HTMLInputElement>('cfg-phone').checked = c.phoneControl;
   $<HTMLInputElement>('cfg-speak').checked = c.speakReplies;
   $('secure-note').textContent = s.secureStorage ? 'Keys and tokens are encrypted by your operating system and never shown again.' : 'This computer has no secure key storage, so keys cannot be saved here. Put them in the .env file instead.';
-  showProviderRows();
+  showBrainNote();
 }
 
-function showProviderRows(): void {
-  const p = $<HTMLSelectElement>('cfg-provider').value;
-  $('row-model').hidden = p === 'builtin' || p === 'none';
-  $('brain-note').textContent = p === 'builtin' ? `My own brain (Qwen2.5 1.5B, open-source) runs on this computer: nothing you say leaves it. ${state?.brain.detail ?? ''}` : '';
-  $('row-key').hidden = p !== 'anthropic';
-  $('row-ollama').hidden = p !== 'ollama';
+function showBrainNote(): void {
+  $('brain-note').textContent = `Built in and always on: it runs on this computer, so nothing you say leaves it. Status: ${state?.brain.detail ?? ''}`;
 }
 
 function render(s: BotState): void {
@@ -299,7 +292,6 @@ for (const tab of document.querySelectorAll<HTMLButtonElement>('[data-tab]')) {
     if (tab.dataset.tab === 'settings' && state) fillSettings(state);
   });
 }
-$('cfg-provider').addEventListener('change', showProviderRows);
 
 $('btn-connect').addEventListener('click', async () => {
   say('Connecting…');
@@ -331,10 +323,10 @@ $('btn-save').addEventListener('click', async () => {
   const v = (id: string) => $<HTMLInputElement>(id).value;
   const c = (id: string) => $<HTMLInputElement>(id).checked;
   let r = await window.bot.updateConfig({
-    provider: v('cfg-provider') as 'none' | 'anthropic' | 'ollama', model: v('cfg-model'), ollamaUrl: v('cfg-ollama'), obsUrl: v('cfg-obs'),
+    obsUrl: v('cfg-obs'),
     twitchClientId: v('cfg-tw-id'), twitchChannel: v('cfg-tw-channel'), autoConnectStream: c('cfg-autoconnect'), phoneControl: c('cfg-phone'), speakReplies: c('cfg-speak'),
   });
-  for (const [id, name] of [['cfg-key', 'anthropicKey'], ['cfg-obs-pass', 'obsPassword'], ['cfg-tw-token', 'twitchToken']] as const) {
+  for (const [id, name] of [['cfg-obs-pass', 'obsPassword'], ['cfg-tw-token', 'twitchToken']] as const) {
     const typed = v(id).trim();
     if (r.ok && typed) r = await window.bot.setSecret(name, typed === '-' ? '' : typed);
   }
@@ -413,8 +405,6 @@ window.bot.onEvent((e) => {
 void refresh().then(() => {
   if (!state) return;
   const b = state.brain;
-  const extra = state.config.provider !== 'builtin' ? (state.modelReady ? 'Ask me anything.' : 'Open ☰ › Settings to give me a brain.')
-    : b.state === 'downloading' || b.state === 'missing' ? 'I\'m downloading my brain the first time (about 1 GB). Simple commands work already.'
-    : 'Ask me anything.';
+  const extra = b.state === 'downloading' || b.state === 'missing' ? 'I\'m finishing setting up my brain. Simple commands work already.' : 'Ask me anything.';
   say(`Hi, I'm ${state.settings.botName}! ${extra}`);
 });

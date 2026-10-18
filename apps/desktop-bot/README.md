@@ -4,7 +4,7 @@ An agentic AI friend that floats on your desktop (Windows, Mac, Linux). It answe
 does things on your computer, runs your live stream like a copilot, and follows your family's
 rules. Family members can command it from their phones.
 
-## Install (one line, like Ollama)
+## Install (one line)
 
 **Windows** (PowerShell):
 
@@ -48,18 +48,14 @@ installer (`.exe`, `.dmg` or `.AppImage`) in `release/`.
 The app is not code-signed yet, so Windows shows "Unknown publisher" and SmartScreen may ask once.
 Showing your own name as publisher needs a paid code-signing certificate.
 
-## Its own brain
+## Its brain
 
-The bot thinks with its own built-in brain: a small open-source AI model (Qwen2.5 1.5B Instruct,
-Apache-2.0 license) that runs inside the bot on your computer. It needs no Ollama, no Claude and
-no internet, and nothing you say leaves your computer.
+The bot comes with its own brain, built in and ready from the first start. It runs on your
+computer: it needs no account and no internet to think, and nothing you say leaves your computer.
 
-- The first start downloads it once (about 1 GB, into `~/.familyai/models`). The download resumes
-  if it stops, and it is checked against the official checksum before it is used.
-- It uses your graphics card when it can (NVIDIA, AMD or Intel through Vulkan), otherwise the processor.
-- Answers take a few seconds on a normal laptop. It is smaller than Claude, so for hard questions
-  you can still pick Claude or Ollama in **☰ › Settings › AI brain** (optional).
-- Fixed commands (below) work instantly, even while the brain is downloading.
+- The installer sets the brain up (about 1 GB, checked before it is used).
+- It uses your graphics card when it can, otherwise the processor. Answers take a few seconds.
+- Fixed commands (below) work instantly.
 
 ## What you can say
 
@@ -72,7 +68,7 @@ no internet, and nothing you say leaves your computer.
 | Stream | "switch to BRB", "mute mic", "go live", "end stream", "timeout name 5 minutes", "ban name", "start a poll: best snack? chips or popcorn", "end poll", "start a giveaway for a game key", "draw winner", "add command !discord saying join us", "summary" |
 | Safety | "stop", "resume", "pending", "approve a1", "AI mode on" |
 
-With a brain, ask anything else in your own words ("read this page and tell me the price",
+Ask anything else in your own words ("read this page and tell me the price",
 "close everything except OBS and switch to the gameplay scene").
 
 ## Safety rules (built into the code, not the prompt)
@@ -112,7 +108,7 @@ screen time and the activity log. Keys are in `secrets.bin`, encrypted by your o
 ## Known limits
 
 - Take-over types and presses keys, but cannot see the screen yet.
-- The built-in brain needs about 2 GB of free memory while it runs.
+- The brain needs about 2 GB of free memory while it runs.
 - Voice: the bot can speak replies (Settings), but cannot listen yet.
 - macOS: take-over needs Accessibility permission. Linux: take-over needs `xdotool`; transparent
   windows need a compositor.
@@ -124,3 +120,7 @@ screen time and the activity log. Keys are in `secrets.bin`, encrypted by your o
 npm run typecheck
 npm test
 ```
+
+## Credits
+
+Built with Electron, llama.cpp (MIT) and the Qwen2.5 open model (Apache-2.0).

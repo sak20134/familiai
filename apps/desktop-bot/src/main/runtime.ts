@@ -13,7 +13,7 @@ import { Brain } from './agent/brain';
 import { Agent } from './agent/agent';
 import { canApprove, Gate } from './agent/gate';
 import { MemoryStore } from './agent/memory';
-import { DEFAULT_MODELS, type ModelConfig } from './agent/model';
+import type { ModelConfig } from './agent/model';
 import { PLANNERS } from './agent/planners';
 import type { Actor, Outcome, Reply } from './agent/types';
 import { ConfigStore, type Cipher } from './config';
@@ -41,6 +41,8 @@ export interface RuntimeDeps {
   quit: () => void;
   sys?: System;
   env?: NodeJS.ProcessEnv;
+  /** Tests pass their own brain; the app makes the real one. */
+  brain?: Brain;
 }
 
 /** Tools the user already OK'd by approving take-over: they run without a new OK while it lasts. */
@@ -96,7 +98,7 @@ export class Runtime {
     this.sys = d.sys ?? realSystem();
     this.config = new ConfigStore(d.dataDir, d.cipher);
     let lastReport = '';
-    this.brain = new Brain({
+    this.brain = d.brain ?? new Brain({
       dir: join(d.dataDir, 'models'),
       onStatus: (s) => {
         if (s.state === 'ready') d.say('My brain is awake. Ask me anything!');
@@ -168,7 +170,7 @@ export class Runtime {
     } catch (err) {
       this.log.add('safety', 'failed', 'Bot', `The terminal command channel could not start: ${(err as Error).message}`);
     }
-    if (cfg.provider === 'builtin') this.brain.prepare();
+    this.brain.prepare(); // already set up by the installer; this only wakes it, or repairs it
     if (cfg.phoneControl) await this.setPhoneControl(true);
     if (cfg.autoConnectStream) void this.connectStream();
     this.screenTimer = setInterval(() => void this.screenTick(), SCREEN_TICK_MS);
@@ -189,17 +191,9 @@ export class Runtime {
     }
   }
 
-  modelConfig(): ModelConfig | null {
-    const c = this.config.get();
-    if (c.provider === 'builtin') return { provider: 'builtin', model: DEFAULT_MODELS.builtin, brain: this.brain };
-    if (c.provider === 'anthropic') {
-      const apiKey = this.config.secret('anthropicKey') ?? this.env.ANTHROPIC_API_KEY;
-      return apiKey ? { provider: 'anthropic', model: c.model || this.env.FAMILYAI_MODEL || DEFAULT_MODELS.anthropic, apiKey } : null;
-    }
-    if (c.provider === 'ollama') return { provider: 'ollama', model: c.model || DEFAULT_MODELS.ollama, baseUrl: c.ollamaUrl };
-    // Nothing chosen yet, but a key in .env still works, as it did before.
-    if (this.env.ANTHROPIC_API_KEY) return { provider: 'anthropic', model: this.env.FAMILYAI_MODEL || DEFAULT_MODELS.anthropic, apiKey: this.env.ANTHROPIC_API_KEY };
-    return null;
+  /** The bot's one brain. It is always the brain: nothing else can take its place. */
+  modelConfig(): ModelConfig {
+    return { brain: this.brain };
   }
 
   async handle(text: string, actor: Actor): Promise<Reply> {
@@ -273,7 +267,7 @@ export class Runtime {
       you: { name: actor.name, role: actor.role },
       canApprove: canApprove(actor, 'high'),
       canManage: isParent,
-      modelReady: this.modelConfig() !== null,
+      modelReady: this.brain.downloaded,
       brain: this.brain.status(),
       aiMode: this.gate.aiMode,
       stopped: this.gate.stopped,

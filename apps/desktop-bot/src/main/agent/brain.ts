@@ -22,7 +22,8 @@ export interface ModelSpec {
 
 export const BRAIN_MODEL: ModelSpec = {
   name: 'Qwen2.5 1.5B Instruct',
-  file: 'qwen2.5-1.5b-instruct-q4_k_m.gguf',
+  // Stored under the bot's own name; the url below says exactly which file it is.
+  file: 'familyai-brain.gguf',
   // Pinned to one commit, so the file can never change under us.
   url: 'https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/91cad51170dc346986eccefdc2dd33a9da36ead9/qwen2.5-1.5b-instruct-q4_k_m.gguf',
   size: 1_117_320_736,
@@ -87,7 +88,7 @@ export async function downloadVerified(spec: ModelSpec, dir: string, opts: { fet
       await res.body?.cancel();
       return restart(spec, dir, opts);
     }
-    if (!res.ok || !res.body) throw new Error(`Could not download the brain (${res.status}). Check your internet connection and try again.`);
+    if (!res.ok || !res.body) throw new Error(`Could not set up the brain (${res.status}). Check your internet connection and try again.`);
     const out = createWriteStream(part, { flags: have > 0 ? 'a' : 'w' });
     const reader = res.body.getReader();
     let lastReport = 0;
@@ -114,7 +115,7 @@ export async function downloadVerified(spec: ModelSpec, dir: string, opts: { fet
   const digest = hash.digest('hex');
   if (digest !== spec.sha256) {
     rmSync(part, { force: true });
-    throw new Error('The downloaded brain did not match its official checksum, so it was deleted and NOT used.');
+    throw new Error('The brain files did not pass their safety check, so they were deleted and NOT used. Try again.');
   }
   renameSync(part, target);
   writeFileSync(marker, spec.sha256);
@@ -185,8 +186,8 @@ export class Brain {
   constructor(private readonly o: BrainOptions) {
     this.spec = o.spec ?? BRAIN_MODEL;
     this.current = isVerified(this.spec, o.dir)
-      ? { state: 'asleep', detail: 'Downloaded. Wakes up for the first question.' }
-      : { state: 'missing', detail: `Needs a one-time download (${Math.round(this.spec.size / MB)} MB).` };
+      ? { state: 'asleep', detail: 'Ready. Wakes up for the first question.' }
+      : { state: 'missing', detail: 'Not set up yet.' };
   }
 
   status(): BrainStatus {
@@ -219,11 +220,11 @@ export class Brain {
     try {
       const path = await downloadVerified(this.spec, this.o.dir, {
         ...(this.o.fetchImpl ? { fetchImpl: this.o.fetchImpl } : {}),
-        onProgress: (done, total) => this.set({ state: 'downloading', progress: done / total, detail: `Downloading my brain: ${Math.round((done / total) * 100)}% of ${Math.round(total / MB)} MB` }),
+        onProgress: (done, total) => this.set({ state: 'downloading', progress: done / total, detail: `Setting up my brain: ${Math.round((done / total) * 100)}%` }),
       });
       this.set({ state: 'loading', detail: 'Waking up my brain...' });
       this.engine = await (this.o.loader ?? llamaLoader)(path);
-      this.set({ state: 'ready', detail: `${this.spec.name}, running on this computer.` });
+      this.set({ state: 'ready', detail: 'Awake.' });
       return this.engine;
     } catch (err) {
       this.set({ state: 'error', detail: err instanceof Error ? err.message : String(err) });

@@ -125,18 +125,18 @@ describe('config', () => {
   const cipher: Cipher = { available: () => true, encrypt: (t) => Buffer.from(t.split('').reverse().join('')), decrypt: (b) => b.toString().split('').reverse().join('') };
   it('cleans bad values', () => {
     expect(parseConfig(null)).toEqual(DEFAULT_CONFIG);
-    expect(parseConfig({ provider: 'evil', obsUrl: 'javascript:x', phonePort: 80, twitchChannel: '#My_Chan!' })).toMatchObject({ provider: 'builtin', obsUrl: DEFAULT_CONFIG.obsUrl, phonePort: 47778, twitchChannel: 'my_chan' });
+    expect(parseConfig({ provider: 'evil', obsUrl: 'javascript:x', phonePort: 80, twitchChannel: '#My_Chan!' })).toMatchObject({ obsUrl: DEFAULT_CONFIG.obsUrl, phonePort: 47778, twitchChannel: 'my_chan' });
   });
   it('encrypts secrets, never stores them in config.json, and reports only flags', () => {
     const c = new ConfigStore(dir, cipher);
-    c.update({ provider: 'anthropic' });
-    c.setSecret('anthropicKey', 'sk-ant-secret');
+    c.update({ twitchChannel: 'mine' });
+    c.setSecret('twitchToken', 'sk-ant-secret');
     expect(readFileSync(join(dir, 'config.json'), 'utf8')).not.toContain('sk-ant');
     expect(readFileSync(join(dir, 'secrets.bin'), 'utf8')).not.toContain('sk-ant-secret');
-    expect(new ConfigStore(dir, cipher).secret('anthropicKey')).toBe('sk-ant-secret');
-    expect(c.secretFlags()).toEqual({ anthropicKey: true, twitchToken: false, obsPassword: false });
-    c.setSecret('anthropicKey', '');
-    expect(c.secretFlags().anthropicKey).toBe(false);
+    expect(new ConfigStore(dir, cipher).secret('twitchToken')).toBe('sk-ant-secret');
+    expect(c.secretFlags()).toEqual({ twitchToken: true, obsPassword: false });
+    c.setSecret('twitchToken', '');
+    expect(c.secretFlags().twitchToken).toBe(false);
   });
   it('refuses to save secrets without secure storage', () => {
     const c = new ConfigStore(dir, { ...cipher, available: () => false });

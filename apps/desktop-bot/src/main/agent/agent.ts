@@ -85,7 +85,7 @@ export class Agent {
     const cfg = this.o.model();
     if (!cfg) {
       return {
-        text: 'I can only do fixed commands until an AI model is set up (Settings). Try "switch to BRB", "close notepad", "limit gaming to 1 hour", "remember the wifi is on the router" or "summary".',
+        text: 'My brain is not available right now, so I can only do fixed commands. Try "switch to BRB", "close notepad", "limit gaming to 1 hour", "remember the wifi is on the router" or "summary".',
         outcomes: [],
         offline: true,
       };

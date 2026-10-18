@@ -53,9 +53,6 @@ export interface LinkView {
 }
 
 export interface ConfigView {
-  provider: 'builtin' | 'anthropic' | 'ollama' | 'none';
-  model: string;
-  ollamaUrl: string;
   obsUrl: string;
   twitchClientId: string;
   twitchChannel: string;
@@ -66,7 +63,7 @@ export interface ConfigView {
   autoConnectStream: boolean;
 }
 
-export type SecretName = 'anthropicKey' | 'twitchToken' | 'obsPassword';
+export type SecretName = 'twitchToken' | 'obsPassword';
 
 export interface BotState {
   settings: ViewSettings;

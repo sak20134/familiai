@@ -12,6 +12,7 @@ const node = { bundle: true, platform: 'node', target: 'node20', format: 'cjs', 
 
 await build({ ...node, entryPoints: ['src/main/main.ts'], outfile: 'dist/main/main.js' });
 await build({ ...node, entryPoints: ['src/preload/preload.ts'], outfile: 'dist/preload/preload.js' });
+await build({ ...node, entryPoints: ['src/main/setup-brain.ts'], outfile: 'dist/setup-brain.js' });
 await build({ bundle: true, platform: 'browser', target: 'chrome120', format: 'iife', entryPoints: ['src/renderer/renderer.ts'], outfile: 'dist/renderer/renderer.js', logLevel: 'warning' });
 
 mkdirSync('dist/renderer', { recursive: true });

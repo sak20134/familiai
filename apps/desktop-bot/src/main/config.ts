@@ -1,16 +1,12 @@
-// The bot's settings beyond its look: which AI to use, stream connections, phone control.
-// Secrets (Claude key, Twitch token, OBS password) are encrypted with the operating system's
+// The bot's settings beyond its look: stream connections, phone control, voice.
+// Secrets (Twitch token, OBS password) are encrypted with the operating system's
 // own secure storage (Windows DPAPI, macOS Keychain, Linux secret service) and never shown
 // back to the screen: the page only learns whether each one is set.
 
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { ProviderName } from './agent/model';
 
 export interface BotConfig {
-  provider: ProviderName | 'none';
-  model: string;
-  ollamaUrl: string;
   obsUrl: string;
   twitchClientId: string;
   twitchChannel: string;
@@ -21,14 +17,10 @@ export interface BotConfig {
   autoConnectStream: boolean;
 }
 
-export const SECRET_NAMES = ['anthropicKey', 'twitchToken', 'obsPassword'] as const;
+export const SECRET_NAMES = ['twitchToken', 'obsPassword'] as const;
 export type SecretName = (typeof SECRET_NAMES)[number];
 
 export const DEFAULT_CONFIG: BotConfig = {
-  // The bot's own brain, running inside the bot. Claude and Ollama are optional extras.
-  provider: 'builtin',
-  model: '',
-  ollamaUrl: 'http://127.0.0.1:11434',
   obsUrl: 'ws://127.0.0.1:4455',
   twitchClientId: '',
   twitchChannel: '',
@@ -51,13 +43,8 @@ const port = (v: unknown, fallback: number) => (Number.isInteger(v) && (v as num
 /** Anything from disk or from the page goes through here; unknown or bad fields fall back. */
 export function parseConfig(raw: unknown): BotConfig {
   const o = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
-  const provider = o.provider === 'anthropic' || o.provider === 'ollama' || o.provider === 'none' ? o.provider : 'builtin';
-  const ollamaUrl = s(o.ollamaUrl, 200, DEFAULT_CONFIG.ollamaUrl);
   const obsUrl = s(o.obsUrl, 200, DEFAULT_CONFIG.obsUrl);
   return {
-    provider,
-    model: s(o.model, 80, '').replace(/[^\w.:/-]/g, ''),
-    ollamaUrl: /^https?:\/\/[^\s]+$/.test(ollamaUrl) ? ollamaUrl : DEFAULT_CONFIG.ollamaUrl,
     obsUrl: /^wss?:\/\/[^\s]+$/.test(obsUrl) ? obsUrl : DEFAULT_CONFIG.obsUrl,
     twitchClientId: s(o.twitchClientId, 64, '').replace(/[^\w]/g, ''),
     twitchChannel: s(o.twitchChannel, 40, '').replace(/^#/, '').replace(/[^\w]/g, '').toLowerCase(),
@@ -99,7 +86,7 @@ export class ConfigStore {
 
   /** Which secrets are set, without their values. */
   secretFlags(): Record<SecretName, boolean> {
-    return { anthropicKey: Boolean(this.secrets.anthropicKey), twitchToken: Boolean(this.secrets.twitchToken), obsPassword: Boolean(this.secrets.obsPassword) };
+    return { twitchToken: Boolean(this.secrets.twitchToken), obsPassword: Boolean(this.secrets.obsPassword) };
   }
 
   /** An empty value removes the secret. */

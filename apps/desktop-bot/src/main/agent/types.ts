@@ -10,7 +10,7 @@ export interface Actor {
   via: 'desktop' | 'phone' | 'cli' | 'rule';
 }
 
-/** JSON Schema for a tool's input, as both Claude and Ollama expect it. */
+/** JSON Schema for a tool's input, as the brain's tool grammar expects it. */
 export interface InputSchema {
   type: 'object';
   properties: Record<string, { type: string; description?: string; items?: { type: string }; enum?: readonly string[] }>;

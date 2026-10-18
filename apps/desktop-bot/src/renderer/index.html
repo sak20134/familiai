@@ -69,19 +69,8 @@
       </div>
 
       <div class="tab" id="tab-settings" hidden>
-        <h3>AI brain</h3>
-        <label class="field">Provider
-          <select id="cfg-provider">
-            <option value="builtin">Built-in brain (runs inside the bot, private, free)</option>
-            <option value="none">None (fixed commands only)</option>
-            <option value="anthropic">Claude (optional, needs a key)</option>
-            <option value="ollama">Ollama (optional)</option>
-          </select>
-        </label>
+        <h3>Brain</h3>
         <p id="brain-note" class="note"></p>
-        <label class="field" id="row-model">Model <input id="cfg-model" type="text" maxlength="80" placeholder="default" /></label>
-        <label class="field" id="row-key">Claude key <input id="cfg-key" type="password" maxlength="400" placeholder="sk-ant-..." autocomplete="off" /></label>
-        <label class="field" id="row-ollama">Ollama address <input id="cfg-ollama" type="text" maxlength="200" /></label>
         <h3>Stream</h3>
         <label class="field">OBS address <input id="cfg-obs" type="text" maxlength="200" /></label>
         <label class="field">OBS password <input id="cfg-obs-pass" type="password" maxlength="400" autocomplete="off" /></label>

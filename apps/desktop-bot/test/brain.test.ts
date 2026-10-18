@@ -62,7 +62,7 @@ describe('brain download', () => {
 
   it('deletes and refuses a file that does not match the official checksum', async () => {
     const s = server(Buffer.from(BYTES).fill(1, 100, 110));
-    await expect(downloadVerified(spec(), dir, { fetchImpl: s.fetchImpl })).rejects.toThrow(/checksum.*NOT used/);
+    await expect(downloadVerified(spec(), dir, { fetchImpl: s.fetchImpl })).rejects.toThrow(/safety check.*NOT used/);
     expect(existsSync(join(dir, 'test.gguf'))).toBe(false);
     expect(existsSync(join(dir, 'test.gguf.part'))).toBe(false);
   });
@@ -128,7 +128,7 @@ describe('talking to the brain', () => {
     const engine: Engine = { generate: async () => answers.shift()!, close: async () => {} };
     const brain = new Brain({ dir, spec: spec(), loader: async () => engine });
     const tool: ToolDef = { spec: { name: 'close_app', risk: 'medium', description: 'Close an app.' }, input: { type: 'object', properties: { app: { type: 'string' } }, required: ['app'] }, run: async () => ok('Closed.') };
-    const agent = new Agent({ tools: [tool], planners: [], gate: new Gate(), log: new ActivityLog(join(dir, 'a')), memory: new MemoryStore(join(dir, 'm')), model: () => ({ provider: 'builtin', model: 'x', brain }), botName: () => 'Pixel' });
+    const agent = new Agent({ tools: [tool], planners: [], gate: new Gate(), log: new ActivityLog(join(dir, 'a')), memory: new MemoryStore(join(dir, 'm')), model: () => ({ brain }), botName: () => 'Pixel' });
     const me: Actor = { id: 'owner', name: 'S', role: 'owner', via: 'desktop' };
     const r = await agent.handle('get rid of roblox please', me);
     expect(r.outcomes[0]?.kind).toBe('needs_approval');
@@ -137,8 +137,8 @@ describe('talking to the brain', () => {
 
   it('says plainly that the brain is still downloading, without waiting for it', async () => {
     const brain = new Brain({ dir, spec: spec(), fetchImpl: (async () => new Promise(() => {})) as unknown as typeof fetch });
-    const agent = new Agent({ tools: [], planners: [], gate: new Gate(), log: new ActivityLog(join(dir, 'a')), memory: new MemoryStore(join(dir, 'm')), model: () => ({ provider: 'builtin', model: 'x', brain }), botName: () => 'Pixel' });
+    const agent = new Agent({ tools: [], planners: [], gate: new Gate(), log: new ActivityLog(join(dir, 'a')), memory: new MemoryStore(join(dir, 'm')), model: () => ({ brain }), botName: () => 'Pixel' });
     const r = await agent.handle('tell me a joke', { id: 'o', name: 'S', role: 'owner', via: 'desktop' });
-    expect(r.text).toMatch(/getting my brain ready/);
+    expect(r.text).toMatch(/still setting up my brain/);
   });
 });
