@@ -70,6 +70,19 @@
 
       <div class="tab" id="tab-settings" hidden>
         <h3>Brain</h3>
+        <label class="field">Brain
+          <select id="cfg-brain">
+            <option value="default">Default (on this computer)</option>
+            <option value="light">Light (on this computer, smaller and faster)</option>
+            <option value="api">My own API (online)</option>
+            <option value="off">Off (fixed commands only)</option>
+          </select>
+        </label>
+        <div id="api-fields" hidden>
+          <label class="field">API address <input id="cfg-api-url" type="text" maxlength="200" placeholder="https://api.example.com/v1" /></label>
+          <label class="field">Model name <input id="cfg-api-model" type="text" maxlength="100" /></label>
+          <label class="field">API key <input id="cfg-api-key" type="password" maxlength="400" autocomplete="off" /></label>
+        </div>
         <p id="brain-note" class="note"></p>
         <h3>Stream</h3>
         <label class="field">OBS address <input id="cfg-obs" type="text" maxlength="200" /></label>

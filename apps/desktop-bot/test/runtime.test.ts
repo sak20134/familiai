@@ -10,7 +10,7 @@ import type { ProcInfo, System } from '../src/main/desktop/apps';
 import { Brain } from '../src/main/agent/brain';
 import { Runtime } from '../src/main/runtime';
 
-const CLI = join(__dirname, '..', 'bin', 'familyai.mjs');
+const CLI = join(__dirname, '..', 'bin', 'cli.mjs');
 
 function cli(home: string, ...args: string[]): Promise<{ code: number; out: string }> {
   return new Promise((resolve) => {

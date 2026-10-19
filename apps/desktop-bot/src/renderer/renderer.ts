@@ -243,6 +243,12 @@ function fillSettings(s: BotState): void {
     input.value = '';
     input.placeholder = s.secrets[name] ? 'saved (type to replace, or "-" to remove)' : 'not set';
   }
+  $<HTMLSelectElement>('cfg-brain').value = c.brain;
+  set('cfg-api-url', c.apiUrl);
+  set('cfg-api-model', c.apiModel);
+  const key = $<HTMLInputElement>('cfg-api-key');
+  key.value = '';
+  key.placeholder = s.secrets.apiKey ? 'saved (type to replace, or "-" to remove)' : 'not set';
   $<HTMLInputElement>('cfg-autoconnect').checked = c.autoConnectStream;
   $<HTMLInputElement>('cfg-aimode').checked = s.aiMode;
   $<HTMLInputElement>('cfg-phone').checked = c.phoneControl;
@@ -252,8 +258,14 @@ function fillSettings(s: BotState): void {
 }
 
 function showBrainNote(): void {
-  $('brain-note').textContent = `Built in and always on: it runs on this computer, so nothing you say leaves it. Status: ${state?.brain.detail ?? ''}`;
+  const choice = $<HTMLSelectElement>('cfg-brain').value;
+  $('api-fields').hidden = choice !== 'api';
+  const where = choice === 'api'
+    ? 'Online: what you say to the bot is sent to the service you choose, so use it only if that is OK for you and your family.'
+    : choice === 'off' ? 'No AI: only fixed commands like "close notepad" work.' : 'Runs on this computer, so nothing you say leaves it.';
+  $('brain-note').textContent = `${where} Status: ${state?.brain.detail ?? ''}`;
 }
+$('cfg-brain').addEventListener('change', showBrainNote);
 
 function render(s: BotState): void {
   state = s;
@@ -324,9 +336,10 @@ $('btn-save').addEventListener('click', async () => {
   const c = (id: string) => $<HTMLInputElement>(id).checked;
   let r = await window.bot.updateConfig({
     obsUrl: v('cfg-obs'),
+    brain: v('cfg-brain') as 'default' | 'light' | 'api' | 'off', apiUrl: v('cfg-api-url'), apiModel: v('cfg-api-model'),
     twitchClientId: v('cfg-tw-id'), twitchChannel: v('cfg-tw-channel'), autoConnectStream: c('cfg-autoconnect'), phoneControl: c('cfg-phone'), speakReplies: c('cfg-speak'),
   });
-  for (const [id, name] of [['cfg-obs-pass', 'obsPassword'], ['cfg-tw-token', 'twitchToken']] as const) {
+  for (const [id, name] of [['cfg-obs-pass', 'obsPassword'], ['cfg-tw-token', 'twitchToken'], ['cfg-api-key', 'apiKey']] as const) {
     const typed = v(id).trim();
     if (r.ok && typed) r = await window.bot.setSecret(name, typed === '-' ? '' : typed);
   }

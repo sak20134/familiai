@@ -134,7 +134,7 @@ describe('config', () => {
     expect(readFileSync(join(dir, 'config.json'), 'utf8')).not.toContain('sk-ant');
     expect(readFileSync(join(dir, 'secrets.bin'), 'utf8')).not.toContain('sk-ant-secret');
     expect(new ConfigStore(dir, cipher).secret('twitchToken')).toBe('sk-ant-secret');
-    expect(c.secretFlags()).toEqual({ twitchToken: true, obsPassword: false });
+    expect(c.secretFlags()).toEqual({ twitchToken: true, obsPassword: false, apiKey: false });
     c.setSecret('twitchToken', '');
     expect(c.secretFlags().twitchToken).toBe(false);
   });

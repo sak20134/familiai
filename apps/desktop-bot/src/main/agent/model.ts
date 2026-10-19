@@ -1,13 +1,11 @@
-// How the agent talks to the bot's brain. There is exactly one brain (see brain.ts), built into
-// the bot and running on this computer; nothing else can be plugged in. The brain only
+// How the agent talks to the bot's brain: one that runs on this computer (brain.ts) or, when the
+// person chooses it in Settings, their own chat API (api-brain.ts). Either way the brain only
 // PROPOSES tool calls; the agent decides, through the gate, what really runs.
 
-import { BrainConversation, callFromText, dropNulls, toFunctions, type Brain } from './brain';
+import { BrainConversation, callFromText, dropNulls, toFunctions, type Brain, type Engine } from './brain';
 import type { InputSchema } from './types';
 
-export interface ModelConfig {
-  brain: Brain;
-}
+export type ModelConfig = { brain: Brain } | { engine: () => Promise<Engine> };
 
 export interface ModelTool {
   name: string;
@@ -38,7 +36,7 @@ export interface Session {
 }
 
 export function openSession(cfg: ModelConfig, system: string, history: readonly Turn[], tools: readonly ModelTool[]): Session {
-  return new BrainSession(cfg.brain, system, history, tools);
+  return new BrainSession(cfg, system, history, tools);
 }
 
 class BrainSession implements Session {
@@ -47,27 +45,33 @@ class BrainSession implements Session {
   private readonly names: ReadonlySet<string>;
   private counter = 0;
 
-  constructor(private readonly brain: Brain, system: string, history: readonly Turn[], tools: readonly ModelTool[]) {
+  constructor(private readonly cfg: ModelConfig, system: string, history: readonly Turn[], tools: readonly ModelTool[]) {
     this.conv = new BrainConversation(system, history);
     this.names = new Set(tools.map((t) => t.name));
     this.functions = tools.length ? toFunctions(tools.map((t) => ({ name: t.name, description: t.description, input: t.input }))) : undefined;
   }
 
   async step(): Promise<Step> {
-    if (!this.brain.downloaded) {
-      // Normally the installer sets the brain up. If its files went missing, fetch them again.
-      this.brain.prepare();
-      const s = this.brain.status();
-      throw new Error(s.state === 'error'
-        ? `My brain could not be set up: ${s.detail} Fixed commands like "close notepad" still work.`
-        : `I'm still setting up my brain (${s.detail}). Fixed commands like "close notepad" or "switch to BRB" work right now.`);
-    }
-    const engine = await this.brain.ensure();
+    const engine = await this.engine();
     let r = await engine.generate(this.conv.history, this.functions);
     const asText = r.calls.length === 0 ? callFromText(r.text, this.names) : null;
     if (asText) r = { text: '', calls: [{ name: asText.name, params: asText.params, raw: undefined }] };
     this.conv.record(r);
     return { text: r.text.trim(), calls: r.calls.map((c) => ({ id: `b${++this.counter}`, name: c.name, args: dropNulls(c.params) })) };
+  }
+
+  private async engine(): Promise<Engine> {
+    if ('engine' in this.cfg) return this.cfg.engine();
+    const brain = this.cfg.brain;
+    if (!brain.downloaded) {
+      // Normally the installer sets the brain up. If its files went missing, fetch them again.
+      brain.prepare();
+      const s = brain.status();
+      throw new Error(s.state === 'error'
+        ? `My brain could not be set up: ${s.detail} Fixed commands like "close notepad" still work.`
+        : `I'm still setting up my brain (${s.detail}). Fixed commands like "close notepad" or "switch to BRB" work right now.`);
+    }
+    return brain.ensure();
   }
 
   addResults(results: Array<{ call: ToolCall; content: string }>): void {

@@ -83,7 +83,7 @@ describe('brain status and loading', () => {
     const [a, c] = await Promise.all([b.ensure(), b.ensure()]);
     expect(a).toBe(c);
     expect(loads).toBe(1);
-    expect(states).toEqual(['downloading', 'loading', 'ready']);
+    expect(states).toEqual(['downloading', 'asleep', 'loading', 'ready']);
     expect(new Brain({ dir, spec: spec() }).status().state).toBe('asleep');
   });
   it('shows a plain error when loading fails', async () => {

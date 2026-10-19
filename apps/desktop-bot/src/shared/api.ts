@@ -61,9 +61,12 @@ export interface ConfigView {
   controlPort: number;
   speakReplies: boolean;
   autoConnectStream: boolean;
+  brain: 'default' | 'light' | 'api' | 'off';
+  apiUrl: string;
+  apiModel: string;
 }
 
-export type SecretName = 'twitchToken' | 'obsPassword';
+export type SecretName = 'twitchToken' | 'obsPassword' | 'apiKey';
 
 export interface BotState {
   settings: ViewSettings;

@@ -1,5 +1,5 @@
 // The bot's settings beyond its look: stream connections, phone control, voice.
-// Secrets (Twitch token, OBS password) are encrypted with the operating system's
+// Secrets (Twitch token, OBS password, API key) are encrypted with the operating system's
 // own secure storage (Windows DPAPI, macOS Keychain, Linux secret service) and never shown
 // back to the screen: the page only learns whether each one is set.
 
@@ -15,9 +15,16 @@ export interface BotConfig {
   controlPort: number;
   speakReplies: boolean;
   autoConnectStream: boolean;
+  /** Which brain answers: one that runs on this computer, your own API, or none (fixed commands only). */
+  brain: BrainChoice;
+  apiUrl: string;
+  apiModel: string;
 }
 
-export const SECRET_NAMES = ['twitchToken', 'obsPassword'] as const;
+export const BRAIN_CHOICES = ['default', 'light', 'api', 'off'] as const;
+export type BrainChoice = (typeof BRAIN_CHOICES)[number];
+
+export const SECRET_NAMES = ['twitchToken', 'obsPassword', 'apiKey'] as const;
 export type SecretName = (typeof SECRET_NAMES)[number];
 
 export const DEFAULT_CONFIG: BotConfig = {
@@ -29,6 +36,9 @@ export const DEFAULT_CONFIG: BotConfig = {
   controlPort: 47777,
   speakReplies: false,
   autoConnectStream: false,
+  brain: 'default',
+  apiUrl: '',
+  apiModel: '',
 };
 
 export interface Cipher {
@@ -53,6 +63,9 @@ export function parseConfig(raw: unknown): BotConfig {
     controlPort: port(o.controlPort, DEFAULT_CONFIG.controlPort),
     speakReplies: o.speakReplies === true,
     autoConnectStream: o.autoConnectStream === true,
+    brain: BRAIN_CHOICES.includes(o.brain as BrainChoice) ? (o.brain as BrainChoice) : DEFAULT_CONFIG.brain,
+    apiUrl: s(o.apiUrl, 200, ''),
+    apiModel: s(o.apiModel, 100, '').replace(/[^\w.:/\-@]/g, ''),
   };
 }
 
@@ -86,7 +99,7 @@ export class ConfigStore {
 
   /** Which secrets are set, without their values. */
   secretFlags(): Record<SecretName, boolean> {
-    return { twitchToken: Boolean(this.secrets.twitchToken), obsPassword: Boolean(this.secrets.obsPassword) };
+    return { twitchToken: Boolean(this.secrets.twitchToken), obsPassword: Boolean(this.secrets.obsPassword), apiKey: Boolean(this.secrets.apiKey) };
   }
 
   /** An empty value removes the secret. */

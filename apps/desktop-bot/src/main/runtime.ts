@@ -9,7 +9,8 @@ import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { networkInterfaces } from 'node:os';
 import { join } from 'node:path';
 import { ActivityLog } from './agent/activity';
-import { Brain } from './agent/brain';
+import { createApiEngine } from './agent/api-brain';
+import { Brain, brainById, type Engine } from './agent/brain';
 import { Agent } from './agent/agent';
 import { canApprove, Gate } from './agent/gate';
 import { MemoryStore } from './agent/memory';
@@ -43,6 +44,8 @@ export interface RuntimeDeps {
   env?: NodeJS.ProcessEnv;
   /** Tests pass their own brain; the app makes the real one. */
   brain?: Brain;
+  /** Tests pass their own network call for the API brain. */
+  apiFetch?: typeof fetch;
 }
 
 /** Tools the user already OK'd by approving take-over: they run without a new OK while it lasts. */
@@ -84,6 +87,9 @@ export class Runtime {
   readonly remote: RemoteServer;
   readonly sys: System;
   readonly brain: Brain;
+  private announced = false;
+  private started = false;
+  private api: { key: string; engine: Engine } | null = null;
   private phoneError: string | null = null;
   private screenTimer: ReturnType<typeof setInterval> | null = null;
   private lastScreenTick = Date.now();
@@ -101,7 +107,8 @@ export class Runtime {
     this.brain = d.brain ?? new Brain({
       dir: join(d.dataDir, 'models'),
       onStatus: (s) => {
-        if (s.state === 'ready') d.say('My brain is awake. Ask me anything!');
+        // Said once per run: the brain may nap and wake many times.
+        if (s.state === 'ready' && !this.announced) { this.announced = true; d.say('My brain is awake. Ask me anything!'); }
         if (s.state === 'error') this.log.add('safety', 'failed', 'Bot', `Brain: ${s.detail}`);
         // Refresh the window at most once per percent while downloading.
         const key = `${s.state}:${Math.floor((s.progress ?? 0) * 100)}`;
@@ -170,7 +177,9 @@ export class Runtime {
     } catch (err) {
       this.log.add('safety', 'failed', 'Bot', `The terminal command channel could not start: ${(err as Error).message}`);
     }
-    this.brain.prepare(); // already set up by the installer; this only wakes it, or repairs it
+    await this.applyBrain();
+    this.started = true;
+    if (this.localBrain()) this.brain.prepare(); // downloads it if missing; it wakes on the first question
     if (cfg.phoneControl) await this.setPhoneControl(true);
     if (cfg.autoConnectStream) void this.connectStream();
     this.screenTimer = setInterval(() => void this.screenTick(), SCREEN_TICK_MS);
@@ -191,9 +200,49 @@ export class Runtime {
     }
   }
 
-  /** The bot's one brain. It is always the brain: nothing else can take its place. */
-  modelConfig(): ModelConfig {
+  private localBrain(): boolean {
+    const c = this.config.get().brain;
+    return c === 'default' || c === 'light';
+  }
+
+  /** Called at start and whenever the brain setting changes. */
+  async applyBrain(): Promise<void> {
+    const c = this.config.get();
+    if (c.brain === 'default' || c.brain === 'light') {
+      await this.brain.select(brainById(c.brain));
+      if (this.started) this.brain.prepare();
+    } else {
+      await this.brain.close().catch(() => undefined); // not needed now: free the memory
+    }
+    this.d.changed();
+  }
+
+  /** The brain that answers, as chosen in Settings. null means fixed commands only. */
+  modelConfig(): ModelConfig | null {
+    const c = this.config.get();
+    if (c.brain === 'off') return null;
+    if (c.brain === 'api') return { engine: async () => this.apiEngine() };
     return { brain: this.brain };
+  }
+
+  private apiEngine(): Engine {
+    const c = this.config.get();
+    const key = this.config.secret('apiKey') ?? '';
+    const id = JSON.stringify([c.apiUrl, c.apiModel, key]);
+    if (this.api?.key !== id) {
+      this.api = { key: id, engine: createApiEngine({ baseUrl: c.apiUrl, model: c.apiModel, apiKey: key, ...(this.d.apiFetch ? { fetchImpl: this.d.apiFetch } : {}) }) };
+    }
+    return this.api.engine;
+  }
+
+  private brainView(): { modelReady: boolean; brain: { state: 'missing' | 'downloading' | 'asleep' | 'loading' | 'ready' | 'error'; detail: string; progress?: number } } {
+    const c = this.config.get();
+    if (c.brain === 'off') return { modelReady: false, brain: { state: 'asleep', detail: 'AI is off (light mode). Fixed commands only.' } };
+    if (c.brain === 'api') {
+      const ready = Boolean(c.apiUrl && c.apiModel && (this.config.secret('apiKey') || /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])/.test(c.apiUrl)));
+      return { modelReady: ready, brain: ready ? { state: 'ready', detail: 'Using your own API. What you say is sent to it.' } : { state: 'missing', detail: 'Fill in your API address, model and key in Settings.' } };
+    }
+    return { modelReady: this.brain.downloaded, brain: this.brain.status() };
   }
 
   async handle(text: string, actor: Actor): Promise<Reply> {
@@ -267,8 +316,7 @@ export class Runtime {
       you: { name: actor.name, role: actor.role },
       canApprove: canApprove(actor, 'high'),
       canManage: isParent,
-      modelReady: this.brain.downloaded,
-      brain: this.brain.status(),
+      ...this.brainView(),
       aiMode: this.gate.aiMode,
       stopped: this.gate.stopped,
       takeover: this.takeover.state(),

@@ -152,6 +152,7 @@ function registerIpc(): void {
   handle('config:update', async (patch) => {
     const before = runtime.config.get();
     const after = runtime.config.update((patch && typeof patch === 'object' ? patch : {}) as object);
+    if (before.brain !== after.brain) await runtime.applyBrain();
     if (before.phoneControl !== after.phoneControl || (after.phoneControl && before.phonePort !== after.phonePort)) await runtime.setPhoneControl(after.phoneControl);
     return ok(state());
   });

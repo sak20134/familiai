@@ -60,12 +60,21 @@ too): it updates the app name, command, author and copyright in `package.json`.
 
 ## Its brain
 
-The bot comes with its own brain, built in and ready from the first start. It runs on your
-computer: it needs no account and no internet to think, and nothing you say leaves your computer.
+Pick the brain in **Settings → Brain**:
 
-- The installer sets the brain up (about 1 GB, checked before it is used).
-- It uses your graphics card when it can, otherwise the processor. Answers take a few seconds.
-- Fixed commands (below) work instantly.
+| Choice | What it is |
+|---|---|
+| **Default** | Runs on your computer. No account, no internet to think, nothing you say leaves it. |
+| **Light** | Smaller and faster, for slow computers. A bit less clever. |
+| **My own API** | Optional. Your own chat service (address, model name and key). What you say is sent to that service. Works with any OpenAI-style API, for example DeepSeek, OpenAI, Gemini, Groq, OpenRouter, or Ollama / LM Studio on your own computer. The key is stored encrypted. |
+| **Off** | No AI. Only the fixed commands below. |
+
+- A local brain downloads once (Default about 1 GB, Light about 0.5 GB, checked before use).
+- It does not load at start-up: it wakes for the first question and goes to sleep after
+  5 quiet minutes, so the bot stays light. It uses the processor, leaves one core free, and
+  never more than four. To try the graphics card, set `MONTEX_GPU=1`.
+- A brain only proposes actions; the safety gate still decides what really runs.
+- Fixed commands (below) work instantly, with any choice.
 
 ## What you can say
 
@@ -118,7 +127,8 @@ screen time and the activity log. Keys are in `secrets.bin`, encrypted by your o
 ## Known limits
 
 - Take-over types and presses keys, but cannot see the screen yet.
-- The brain needs about 2 GB of free memory while it runs.
+- A local brain needs about 2 GB of free memory while it is awake (Light needs less).
+- Small local brains make mistakes with tools; the gate and the approval step catch them.
 - Voice: the bot can speak replies (Settings), but cannot listen yet.
 - macOS: take-over needs Accessibility permission. Linux: take-over needs `xdotool`; transparent
   windows need a compositor.
@@ -133,4 +143,5 @@ npm test
 
 ## Credits
 
-Built with Electron, llama.cpp (MIT) and the Qwen2.5 open model (Apache-2.0).
+Built with Electron, llama.cpp (MIT) and the Qwen2.5 open models (Apache-2.0): Default is
+Qwen2.5 1.5B Instruct, Light is Qwen2.5 0.5B Instruct.

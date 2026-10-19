@@ -1,6 +1,8 @@
-// The bot's own brain: a small open-source model (Qwen2.5 1.5B Instruct, Apache-2.0) that runs
-// inside the bot on this computer through llama.cpp. No Ollama, no Claude, no internet after
-// the one-time download. It uses the graphics card when there is one, otherwise the processor.
+// The bot's own brain: a small open-source model (Qwen2.5, Apache-2.0) that runs inside the bot
+// on this computer through llama.cpp. No Ollama, no Claude, no internet after the one-time
+// download. It runs on the processor (the graphics card only when MONTEX_GPU=1), wakes up for the
+// first question instead of at start-up, and goes back to sleep when nobody is talking to it, so
+// it does not slow the computer down.
 //
 // The download is pinned to one exact file and checked against its published SHA-256 before it
 // is ever loaded. An interrupted download resumes where it stopped.
@@ -20,16 +22,42 @@ export interface ModelSpec {
   license: string;
 }
 
-export const BRAIN_MODEL: ModelSpec = {
-  name: 'Qwen2.5 1.5B Instruct',
-  // Stored under the bot's own name; the url below says exactly which file it is.
-  file: 'familyai-brain.gguf',
-  // Pinned to one commit, so the file can never change under us.
-  url: 'https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/91cad51170dc346986eccefdc2dd33a9da36ead9/qwen2.5-1.5b-instruct-q4_k_m.gguf',
-  size: 1_117_320_736,
-  sha256: '6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e',
-  license: 'Apache-2.0',
-};
+/** The brains that run on this computer. The screen only ever shows `label`, never the model name. */
+export interface BrainSpec extends ModelSpec {
+  id: 'default' | 'light';
+  label: string;
+}
+
+export const BRAINS: readonly BrainSpec[] = [
+  {
+    id: 'default',
+    label: 'Default',
+    name: 'Qwen2.5 1.5B Instruct',
+    // Stored under the bot's own name; the url below says exactly which file it is.
+    file: 'familyai-brain.gguf',
+    // Pinned to one commit, so the file can never change under us.
+    url: 'https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/91cad51170dc346986eccefdc2dd33a9da36ead9/qwen2.5-1.5b-instruct-q4_k_m.gguf',
+    size: 1_117_320_736,
+    sha256: '6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e',
+    license: 'Apache-2.0',
+  },
+  {
+    id: 'light',
+    label: 'Light',
+    name: 'Qwen2.5 0.5B Instruct',
+    file: 'brain-light.gguf',
+    url: 'https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/9217f5db79a29953eb74d5343926648285ec7e67/qwen2.5-0.5b-instruct-q4_k_m.gguf',
+    size: 491_400_032,
+    sha256: '74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db',
+    license: 'Apache-2.0',
+  },
+];
+
+export const BRAIN_MODEL: BrainSpec = BRAINS[0]!;
+
+export function brainById(id: string): BrainSpec {
+  return BRAINS.find((b) => b.id === id) ?? BRAIN_MODEL;
+}
 
 /** missing: not downloaded · asleep: downloaded, not loaded yet · ready: loaded and answering */
 export type BrainState = 'missing' | 'downloading' | 'asleep' | 'loading' | 'ready' | 'error';
@@ -136,19 +164,23 @@ export function isVerified(spec: ModelSpec, dir: string): boolean {
   }
 }
 
-/** Loads a model with node-llama-cpp. Uses the GPU when it can, the CPU otherwise. */
+/** Loads a model with node-llama-cpp. Processor only, unless MONTEX_GPU=1 asks for the graphics card. */
 export const llamaLoader: EngineLoader = async (modelPath) => {
   const { getLlama, LlamaChat: Chat } = await import('node-llama-cpp');
   let llama;
-  try {
-    llama = await getLlama({ build: 'never', gpu: 'auto' });
-  } catch {
+  if (process.env.MONTEX_GPU === '1') {
+    try {
+      llama = await getLlama({ build: 'never', gpu: 'auto' });
+    } catch {
+      llama = await getLlama({ build: 'never', gpu: false });
+    }
+  } else {
     llama = await getLlama({ build: 'never', gpu: false });
   }
   const model = await llama.loadModel({ modelPath });
-  // One thread per real core. The library's default can be more threads than cores, and on a
-  // laptop they then fight each other: measured 10-17 s per answer instead of under 1 s.
-  const context = await model.createContext({ contextSize: { min: 2048, max: 8192 }, threads: Math.max(1, llama.cpuMathCores) });
+  // Fewer threads than cores, so the rest of the computer stays smooth, and never more than the
+  // cores (extra threads fight each other: measured 10-17 s per answer instead of under 1 s).
+  const context = await model.createContext({ contextSize: { min: 2048, max: 4096 }, threads: brainThreads(llama.cpuMathCores) });
   const chat: LlamaChat = new Chat({ contextSequence: context.getSequence() });
   let queue: Promise<unknown> = Promise.resolve();
   return {
@@ -169,25 +201,42 @@ export const llamaLoader: EngineLoader = async (modelPath) => {
   };
 };
 
+/** Threads for the model: leave one core free, use at most four. */
+export function brainThreads(cores: number): number {
+  return Math.max(1, Math.min(4, cores - 1));
+}
+
+/** How long the model stays loaded with nobody talking to it. */
+export const IDLE_UNLOAD_MS = 5 * 60_000;
+
 export interface BrainOptions {
   dir: string;
   spec?: ModelSpec;
   loader?: EngineLoader;
   fetchImpl?: typeof fetch;
   onStatus?: (s: BrainStatus) => void;
+  /** Milliseconds of quiet before the model is unloaded. 0 keeps it loaded. */
+  idleMs?: number;
 }
 
 export class Brain {
-  readonly spec: ModelSpec;
+  private chosen: ModelSpec;
   private current: BrainStatus;
   private loading: Promise<Engine> | null = null;
+  private fetching: Promise<string> | null = null;
   private engine: Engine | null = null;
+  private timer: ReturnType<typeof setTimeout> | null = null;
+  private busy = 0;
+  /** Changes whenever the choice changes, so a slow load for the old choice is thrown away. */
+  private generation = 0;
 
   constructor(private readonly o: BrainOptions) {
-    this.spec = o.spec ?? BRAIN_MODEL;
-    this.current = isVerified(this.spec, o.dir)
-      ? { state: 'asleep', detail: 'Ready. Wakes up for the first question.' }
-      : { state: 'missing', detail: 'Not set up yet.' };
+    this.chosen = o.spec ?? BRAIN_MODEL;
+    this.current = this.resting();
+  }
+
+  get spec(): ModelSpec {
+    return this.chosen;
   }
 
   status(): BrainStatus {
@@ -195,41 +244,118 @@ export class Brain {
   }
 
   get downloaded(): boolean {
-    return isVerified(this.spec, this.o.dir);
+    return isVerified(this.chosen, this.o.dir);
   }
 
-  /** Start getting ready in the background (download, then load). Errors show in status(). */
+  /** Switches to another brain. The old one is put to sleep; the new one wakes on the next question. */
+  async select(spec: ModelSpec): Promise<void> {
+    if (spec.file === this.chosen.file) return;
+    this.generation++;
+    this.chosen = spec;
+    this.loading = null;
+    this.fetching = null;
+    await this.close();
+    this.set(this.resting());
+  }
+
+  /** Makes sure the files are there (downloads them if not). It does NOT load the model. */
   prepare(): void {
-    this.ensure().catch(() => undefined);
+    this.fetch().catch(() => undefined);
   }
 
   /** The loaded model, downloading and loading it first if needed. Concurrent callers share one load. */
   ensure(): Promise<Engine> {
     if (this.engine) return Promise.resolve(this.engine);
-    this.loading ??= this.load().finally(() => { this.loading = null; });
+    const gen = this.generation;
+    this.loading ??= this.load(gen).finally(() => { if (gen === this.generation) this.loading = null; });
     return this.loading;
   }
 
   async close(): Promise<void> {
+    if (this.timer) clearTimeout(this.timer);
+    this.timer = null;
     const e = this.engine;
     this.engine = null;
     await e?.close();
   }
 
-  private async load(): Promise<Engine> {
-    try {
-      const path = await downloadVerified(this.spec, this.o.dir, {
+  private resting(): BrainStatus {
+    return isVerified(this.chosen, this.o.dir)
+      ? { state: 'asleep', detail: 'Ready. Wakes up for the first question.' }
+      : { state: 'missing', detail: 'Not set up yet.' };
+  }
+
+  private fetch(): Promise<string> {
+    const gen = this.generation;
+    const spec = this.chosen;
+    if (!this.fetching) {
+      const run = downloadVerified(spec, this.o.dir, {
         ...(this.o.fetchImpl ? { fetchImpl: this.o.fetchImpl } : {}),
-        onProgress: (done, total) => this.set({ state: 'downloading', progress: done / total, detail: `Setting up my brain: ${Math.round((done / total) * 100)}%` }),
-      });
+        onProgress: (done, total) => { if (gen === this.generation) this.set({ state: 'downloading', progress: done / total, detail: `Setting up my brain: ${Math.round((done / total) * 100)}%` }); },
+      }).then(
+        (path) => {
+          if (gen === this.generation && this.current.state !== 'ready' && this.current.state !== 'loading') this.set({ state: 'asleep', detail: 'Ready. Wakes up for the first question.' });
+          return path;
+        },
+        (err) => {
+          if (gen === this.generation) this.set({ state: 'error', detail: err instanceof Error ? err.message : String(err) });
+          throw err;
+        },
+      );
+      this.fetching = run;
+      const clear = () => { if (this.fetching === run) this.fetching = null; };
+      run.then(clear, clear);
+    }
+    return this.fetching;
+  }
+
+  private async load(gen: number): Promise<Engine> {
+    const path = await this.fetch();
+    try {
       this.set({ state: 'loading', detail: 'Waking up my brain...' });
-      this.engine = await (this.o.loader ?? llamaLoader)(path);
+      const raw = await (this.o.loader ?? llamaLoader)(path);
+      if (gen !== this.generation) {
+        await raw.close();
+        throw new Error('The brain was changed while it was waking up.');
+      }
+      this.engine = this.watched(raw);
       this.set({ state: 'ready', detail: 'Awake.' });
+      this.touch();
       return this.engine;
     } catch (err) {
-      this.set({ state: 'error', detail: err instanceof Error ? err.message : String(err) });
+      if (gen === this.generation) this.set({ state: 'error', detail: err instanceof Error ? err.message : String(err) });
       throw err;
     }
+  }
+
+  /** Wraps the model so the brain knows when it is busy and when it has been quiet for a while. */
+  private watched(raw: Engine): Engine {
+    return {
+      generate: async (history, functions) => {
+        this.busy++;
+        if (this.timer) clearTimeout(this.timer);
+        try {
+          return await raw.generate(history, functions);
+        } finally {
+          this.busy--;
+          this.touch();
+        }
+      },
+      close: () => raw.close(),
+    };
+  }
+
+  private touch(): void {
+    if (this.timer) clearTimeout(this.timer);
+    this.timer = null;
+    const ms = this.o.idleMs ?? IDLE_UNLOAD_MS;
+    if (!this.engine || ms <= 0 || this.busy > 0) return;
+    this.timer = setTimeout(() => {
+      this.timer = null;
+      if (this.busy > 0) return;
+      this.close().then(() => this.set({ state: 'asleep', detail: 'Resting. Wakes up for the next question.' }), () => undefined);
+    }, ms);
+    this.timer.unref?.();
   }
 
   private set(s: BrainStatus): void {
