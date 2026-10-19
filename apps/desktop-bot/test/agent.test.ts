@@ -177,6 +177,22 @@ describe('agent', () => {
     expect(r.text).toContain('Waiting for your OK');
   });
 
+  it('daily brief reads the mail, then the brain summarises it; no brain means the plain list', async () => {
+    const mail = tool('check_email', 'low', async () => ok('1. [m1] UNREAD From Mom — Dinner (5m ago)'));
+    const bytes = Buffer.from('weights');
+    const spec = { name: 't', file: 'b.gguf', url: 'https://example.com/t', size: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex'), license: 'x' };
+    writeFileSync(join(dir, 'b.gguf'), bytes);
+    writeFileSync(join(dir, 'b.gguf.ok'), spec.sha256);
+    const seen: string[] = [];
+    const engine: Engine = { generate: async (h) => { seen.push(JSON.stringify(h)); return { text: 'Mom wants to know about dinner.', calls: [] }; }, close: async () => {} };
+    const brain = new Brain({ dir, spec, loader: async () => engine });
+    const r = await make([mail], () => ({ brain })).handle('daily brief', owner);
+    expect(r.text).toContain('Mom wants to know about dinner');
+    expect(seen[0]).toContain('UNREAD From Mom');
+    const plain = await make([mail], () => null).handle('brief me', owner);
+    expect(plain.text).toContain('From Mom');
+  });
+
   it('tells the model the plain status of each action', () => {
     expect(forModel({ kind: 'needs_approval', tool: 'x', id: 'a1', summary: 'Ban bob' })).toMatch(/^WAITING.*NOT happened/);
     expect(forModel({ kind: 'done', tool: 'x', text: 'ok', verified: false })).toMatch(/not independently confirmed/);

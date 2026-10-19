@@ -3,13 +3,14 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { desktopTools } from '../src/main/desktop/tools';
+import { emailTools } from '../src/main/email/tools';
 import { familyTools } from '../src/main/family/tools';
 
 const dir = join(__dirname, '..', 'training', 'data');
 const rows = (f: string) => readFileSync(join(dir, f), 'utf8').trim().split('\n').map((l) => JSON.parse(l) as { tools: Array<{ function: { name: string; parameters: { properties: Record<string, unknown>; required?: string[] } } }>; tool: string | null; args: Record<string, unknown> | null });
 
 describe('training data', () => {
-  const real = [...desktopTools({ sys: {} as never, takeover: {} as never, openExternal: async () => {} }), ...familyTools({ screen: {} as never, memory: {} as never, sys: {} as never })];
+  const real = [...desktopTools({ sys: {} as never, takeover: {} as never, openExternal: async () => {} }), ...familyTools({ screen: {} as never, memory: {} as never, sys: {} as never }), ...emailTools({} as never)];
   const streamSrc = readFileSync(join(__dirname, '..', '..', 'stream-copilot', 'src', 'tools.ts'), 'utf8');
   const streamNames = [...streamSrc.matchAll(/^\s+(\w+): \{ name: '/gm)].map((m) => `stream_${m[1]}`);
 

@@ -17,6 +17,8 @@ import { MemoryStore } from './agent/memory';
 import type { ModelConfig } from './agent/model';
 import { PLANNERS } from './agent/planners';
 import type { Actor, Outcome, Reply } from './agent/types';
+import { Gmail } from './email/gmail';
+import { emailTools } from './email/tools';
 import { ConfigStore, type Cipher } from './config';
 import { closeApp, listProcesses, normalizeName, type System } from './desktop/apps';
 import { TakeOver } from './desktop/takeover';
@@ -87,6 +89,7 @@ export class Runtime {
   readonly remote: RemoteServer;
   readonly sys: System;
   readonly brain: Brain;
+  readonly gmail: Gmail;
   private announced = false;
   private started = false;
   private api: { key: string; engine: Engine } | null = null;
@@ -115,6 +118,14 @@ export class Runtime {
         if (key !== lastReport) { lastReport = key; d.changed(); }
       },
     });
+    this.gmail = new Gmail({
+      clientId: () => this.config.get().googleClientId,
+      clientSecret: () => this.config.secret('googleClientSecret') ?? '',
+      refreshToken: () => this.config.secret('googleRefresh'),
+      saveRefreshToken: (t) => this.config.setSecret('googleRefresh', t),
+      openExternal: d.openExternal,
+      ...(d.apiFetch ? { fetchImpl: d.apiFetch } : {}),
+    });
     this.family = new Family(join(d.dataDir, 'family.json'), d.ownerName);
     this.log = new ActivityLog(join(d.dataDir, 'activity.jsonl'));
     this.memory = new MemoryStore(join(d.dataDir, 'memory.json'));
@@ -135,6 +146,7 @@ export class Runtime {
         ...desktopTools({ sys: this.sys, takeover: this.takeover, openExternal: d.openExternal }),
         ...familyTools({ screen: this.screen, memory: this.memory, sys: this.sys }),
         ...this.stream.tools(),
+        ...emailTools(this.gmail),
       ],
       planners: PLANNERS,
       gate: this.gate,
@@ -146,7 +158,7 @@ export class Runtime {
       onStop: () => this.takeover.stop(),
       status: () => this.statusLines(),
       // A small brain chooses better from fewer tools: stream tools only while a stream is set up.
-      toolFilter: (t) => !t.spec.name.startsWith('stream_') || this.streamActive(),
+      toolFilter: (t) => (!t.spec.name.startsWith('stream_') || this.streamActive()) && (!/_email$/.test(t.spec.name) || this.gmail.connected),
     });
     this.cliFile = join(d.dataDir, 'cli.json');
     this.remote = new RemoteServer({

@@ -19,12 +19,14 @@ export interface BotConfig {
   brain: BrainChoice;
   apiUrl: string;
   apiModel: string;
+  /** Your own Google "desktop app" client ID, for read-only Gmail. */
+  googleClientId: string;
 }
 
 export const BRAIN_CHOICES = ['default', 'light', 'api', 'off'] as const;
 export type BrainChoice = (typeof BRAIN_CHOICES)[number];
 
-export const SECRET_NAMES = ['twitchToken', 'obsPassword', 'apiKey'] as const;
+export const SECRET_NAMES = ['twitchToken', 'obsPassword', 'apiKey', 'googleClientSecret', 'googleRefresh'] as const;
 export type SecretName = (typeof SECRET_NAMES)[number];
 
 export const DEFAULT_CONFIG: BotConfig = {
@@ -39,6 +41,7 @@ export const DEFAULT_CONFIG: BotConfig = {
   brain: 'default',
   apiUrl: '',
   apiModel: '',
+  googleClientId: '',
 };
 
 export interface Cipher {
@@ -65,6 +68,7 @@ export function parseConfig(raw: unknown): BotConfig {
     autoConnectStream: o.autoConnectStream === true,
     brain: BRAIN_CHOICES.includes(o.brain as BrainChoice) ? (o.brain as BrainChoice) : DEFAULT_CONFIG.brain,
     apiUrl: s(o.apiUrl, 200, ''),
+    googleClientId: s(o.googleClientId, 200, '').replace(/[^\w.\-]/g, ''),
     apiModel: s(o.apiModel, 100, '').replace(/[^\w.:/\-@]/g, ''),
   };
 }
@@ -99,7 +103,7 @@ export class ConfigStore {
 
   /** Which secrets are set, without their values. */
   secretFlags(): Record<SecretName, boolean> {
-    return { twitchToken: Boolean(this.secrets.twitchToken), obsPassword: Boolean(this.secrets.obsPassword), apiKey: Boolean(this.secrets.apiKey) };
+    return { twitchToken: Boolean(this.secrets.twitchToken), obsPassword: Boolean(this.secrets.obsPassword), apiKey: Boolean(this.secrets.apiKey), googleClientSecret: Boolean(this.secrets.googleClientSecret), googleRefresh: Boolean(this.secrets.googleRefresh) };
   }
 
   /** An empty value removes the secret. */

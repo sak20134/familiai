@@ -160,6 +160,10 @@ function registerIpc(): void {
     runtime.config.setSecret(str(name) as SecretName, str(value));
     return ok(state());
   });
+  handle('gmail:connect', async () => {
+    await runtime.gmail.connect();
+    return ok(state());
+  });
   handle('stream:connect', async () => {
     await runtime.connectStream();
     return ok(state());

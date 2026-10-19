@@ -23,6 +23,9 @@ TOOLS = {
     "close_app": ("Close an app, letting it save first.", S(app=T('App name, e.g. "chrome", "minecraft"')), ["app"]),
     "force_close_app": ("Force an app to close right away. Unsaved work in it is lost.", S(app=T()), ["app"]),
     "open_website": ("Open a website in the normal web browser.", S(url=T("Full address starting with https://")), ["url"]),
+    "web_search": ("Search the web and get the top results (title, address, short text). Use read_webpage on a result to read it.", S(query=T("What to search for")), ["query"]),
+    "check_email": ('Check Gmail: list recent unread messages (or search with a Gmail query such as "from:mom"). Read-only.', S(query=T('Gmail search, default "is:unread in:inbox"'), max=N("How many, 1 to 10. Default 5.")), []),
+    "read_email": ("Read one Gmail message by its id (from check_email). Read-only.", S(id=T("Message id from check_email")), ["id"]),
     "read_webpage": ("Read a public web page and get its text, to answer questions precisely.", S(url=T("Full address starting with https://")), ["url"]),
     "take_over": ("Start take-over mode: the bot controls the keyboard for a few minutes to do a task.", S(minutes=N("How long, 1 to 60. Default 10."), task=T("What you will do")), []),
     "type_text": ("Type text into the app in front (take-over must be on).", S(text=T()), ["text"]),
@@ -73,6 +76,8 @@ def gen(split):
     notes = NOTES_TEST if test else NOTES
     P = lambda a, b: b if test else a  # phrasing sets
     a = pick(apps); site, url = pick(list(sites.items())); scene = pick(scenes); user = pick(users); note = pick(notes)
+    q = pick(['pasta recipes', 'cheap flights to Delhi', 'how to tie a tie', 'python tutorial', 'weather in Chennai']) if not test else pick(['best budget laptops', 'how to learn guitar', 'tallest mountain in India'])
+    mid = pick(['18c2fa9b1d', '17ab40e2c9', '19f0d3a7e5']) if not test else pick(['16e9b27a44', '1a77c01d3f'])
     mins = pick([20, 30, 45, 60, 90, 120]) if not test else pick([25, 40, 75]); secs = pick([60, 300, 600, 3600]) if not test else pick([120, 900])
     return [
         ("list_apps", pick(P(["what apps are running?", "what's open right now", "show me running programs", "which programs are open"], ["list my open apps", "what's running on the computer?"])), {}),
@@ -80,6 +85,9 @@ def gen(split):
         ("close_app", pick(P([f"close {a}", f"quit {a}", f"shut {a}", f"can you close {a}"], [f"please shut down {a}", f"I'm done with {a}, close it"])), {"app": a}),
         ("force_close_app", pick(P([f"force close {a}", f"{a} is frozen, kill it", f"{a} isn't responding, force quit it"], [f"{a} hung, terminate it now", f"kill {a} immediately"])), {"app": a}),
         ("open_website", pick(P([f"open {site}", f"go to {site}", f"take me to {site}"], [f"pull up {site} in the browser", f"I want to visit {site}"])), {"url": url}),
+        ("web_search", pick(P([f"search for {q}", f"google {q}", f"look up {q}", f"find out {q}"], [f"can you search the web for {q}", f"search online: {q}"])), None),
+        ("check_email", pick(P(["check my email", "any new emails?", "do I have unread mail?", "check my inbox"], ["see if I got any mail", "what's new in my gmail?"])), None),
+        ("read_email", pick(P([f"read email {mid}", f"open the email {mid}"], [f"show me message {mid}"])), None),
         ("read_webpage", pick(P([f"read {url} and tell me what it says", f"what's on {url}?", f"summarise {url}"], [f"look at {url} and give me the main points"])), {"url": url}),
         ("take_over", pick(P([f"take over for {mins} minutes", f"take over the keyboard for {mins} minutes to write my notes"], [f"you drive the computer for {mins} min"])), {"minutes": mins}),
         ("type_text", pick(P(["type: hello everyone", "type this: see you tomorrow", "type: thanks for watching"], ["write out: good morning team"])), None),
@@ -120,6 +128,10 @@ def fill(tool, text, args):
         scope = "family" if "family" in text else "house" if "house" in text else "private"
         body = re.sub(r"^(remember( for the (family|house))?|please note that|don't forget)\s*", "", text)
         return {"text": body, "scope": scope}
+    if tool == "web_search":
+        return {"query": re.sub(r"^(can you )?(search( the web)?( for| online:)?|google|look up|find out)\s*", "", text).strip()}
+    if tool == "check_email": return {}
+    if tool == "read_email": return {"id": re.search(r"([0-9a-f]{10})", text).group(1)}
     if tool == "recall": return {"query": next(w for w in ["wifi", "key", "birthday", "dentist", "grandma"] if w in text)}
     if tool == "stream_obs_mute": return {"input": "Mic", "muted": not any(w in text for w in ["unmute", "back on"])}
     if tool == "stream_chat_say":

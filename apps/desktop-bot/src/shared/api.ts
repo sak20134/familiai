@@ -64,9 +64,10 @@ export interface ConfigView {
   brain: 'default' | 'light' | 'api' | 'off';
   apiUrl: string;
   apiModel: string;
+  googleClientId: string;
 }
 
-export type SecretName = 'twitchToken' | 'obsPassword' | 'apiKey';
+export type SecretName = 'twitchToken' | 'obsPassword' | 'apiKey' | 'googleClientSecret' | 'googleRefresh';
 
 export interface BotState {
   settings: ViewSettings;
@@ -105,6 +106,7 @@ export interface BotApi {
   updateConfig(patch: Partial<ConfigView>): Promise<Result<BotState>>;
   setSecret(name: SecretName, value: string): Promise<Result<BotState>>;
   connectStream(): Promise<Result<BotState>>;
+  connectGmail(): Promise<Result<BotState>>;
   addMember(name: string, role: Role): Promise<Result<BotState>>;
   removeMember(id: string): Promise<Result<BotState>>;
   startPairing(memberId: string): Promise<Result<BotState>>;

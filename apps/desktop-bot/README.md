@@ -76,6 +76,13 @@ Pick the brain in **Settings → Brain**:
 - A brain only proposes actions; the safety gate still decides what really runs.
 - Fixed commands (below) work instantly, with any choice.
 
+## Search, email and conversations
+
+- **Web search:** "search for pasta recipes". No account or key. If a search engine blocks it, it falls back to Wikipedia and says so plainly. Then "read the first one" opens the page for it to read.
+- **Email (Gmail, read-only):** "check my email", "read that email", or "daily brief" for a spoken summary of what is unread and what needs a reply. It can only read: it never asks Google for permission to send or delete. Set it up in Settings → Email: you make a free Google "desktop app" client (Google Cloud Console → turn on the Gmail API → Credentials → OAuth client ID → Desktop app), paste its ID and secret, save, then press Connect Gmail. Only adults can use the email tools.
+- **Conversations:** it remembers the recent conversation per person. Say "new chat" to start fresh.
+- **Open apps:** "open spotify", "close chrome" (see below).
+
 ## What you can say
 
 | Area | Examples |

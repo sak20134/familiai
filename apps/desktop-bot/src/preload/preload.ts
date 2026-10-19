@@ -14,6 +14,7 @@ const api: BotApi = {
   updateConfig: (patch) => ipcRenderer.invoke('config:update', patch),
   setSecret: (name, value) => ipcRenderer.invoke('config:secret', name, value),
   connectStream: () => ipcRenderer.invoke('stream:connect'),
+  connectGmail: () => ipcRenderer.invoke('gmail:connect'),
   addMember: (name, role) => ipcRenderer.invoke('family:add', name, role),
   removeMember: (id) => ipcRenderer.invoke('family:remove', id),
   startPairing: (memberId) => ipcRenderer.invoke('family:pair', memberId),

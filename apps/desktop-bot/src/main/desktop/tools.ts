@@ -6,6 +6,7 @@
 import { fail, ok, str, num, type ToolDef } from '../agent/types';
 import { closeApp, openApp, runningApps, type System } from './apps';
 import type { TakeOver } from './takeover';
+import { webSearch } from './search';
 import { readPage } from './web';
 
 export interface DesktopDeps {
@@ -53,6 +54,15 @@ export function desktopTools(d: DesktopDeps): ToolDef[] {
         if (!/^https?:\/\/[^\s]+$/i.test(url)) return fail('Give me a full web address starting with https://');
         await d.openExternal(url);
         return ok(`Opened ${url} in your browser.`);
+      },
+    },
+    {
+      spec: { name: 'web_search', risk: 'low', description: 'Search the web and get the top results (title, address, short text). Use read_webpage on a result to read it.' },
+      input: { type: 'object', properties: { query: { type: 'string', description: 'What to search for' } }, required: ['query'] },
+      async run(a) {
+        const hits = await webSearch(str(a.query, 200));
+        if (!hits.length) return ok('The search found nothing.');
+        return ok(hits.map((h, i) => `${i + 1}. ${h.title}\n   ${h.url}\n   ${h.snippet}`).join('\n'));
       },
     },
     {

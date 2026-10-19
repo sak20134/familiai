@@ -249,6 +249,11 @@ function fillSettings(s: BotState): void {
   const key = $<HTMLInputElement>('cfg-api-key');
   key.value = '';
   key.placeholder = s.secrets.apiKey ? 'saved (type to replace, or "-" to remove)' : 'not set';
+  set('cfg-g-id', c.googleClientId);
+  const gs = $<HTMLInputElement>('cfg-g-secret');
+  gs.value = '';
+  gs.placeholder = s.secrets.googleClientSecret ? 'saved (type to replace, or "-" to remove)' : 'not set';
+  $('gmail-note').textContent = s.secrets.googleRefresh ? 'Gmail is connected (read-only).' : 'Gmail is not connected.';
   $<HTMLInputElement>('cfg-autoconnect').checked = c.autoConnectStream;
   $<HTMLInputElement>('cfg-aimode').checked = s.aiMode;
   $<HTMLInputElement>('cfg-phone').checked = c.phoneControl;
@@ -305,6 +310,13 @@ for (const tab of document.querySelectorAll<HTMLButtonElement>('[data-tab]')) {
   });
 }
 
+$('btn-gmail').addEventListener('click', async () => {
+  $('gmail-note').textContent = 'Opening Google sign-in in your browser… save your client ID and secret first.';
+  const r = await window.bot.connectGmail();
+  if (!r.ok) { $('gmail-note').textContent = r.error; return; }
+  render(r.value);
+  fillSettings(r.value);
+});
 $('btn-connect').addEventListener('click', async () => {
   say('Connecting…');
   const r = await window.bot.connectStream();
@@ -336,10 +348,10 @@ $('btn-save').addEventListener('click', async () => {
   const c = (id: string) => $<HTMLInputElement>(id).checked;
   let r = await window.bot.updateConfig({
     obsUrl: v('cfg-obs'),
-    brain: v('cfg-brain') as 'default' | 'light' | 'api' | 'off', apiUrl: v('cfg-api-url'), apiModel: v('cfg-api-model'),
+    brain: v('cfg-brain') as 'default' | 'light' | 'api' | 'off', apiUrl: v('cfg-api-url'), apiModel: v('cfg-api-model'), googleClientId: v('cfg-g-id'),
     twitchClientId: v('cfg-tw-id'), twitchChannel: v('cfg-tw-channel'), autoConnectStream: c('cfg-autoconnect'), phoneControl: c('cfg-phone'), speakReplies: c('cfg-speak'),
   });
-  for (const [id, name] of [['cfg-obs-pass', 'obsPassword'], ['cfg-tw-token', 'twitchToken'], ['cfg-api-key', 'apiKey']] as const) {
+  for (const [id, name] of [['cfg-obs-pass', 'obsPassword'], ['cfg-tw-token', 'twitchToken'], ['cfg-api-key', 'apiKey'], ['cfg-g-secret', 'googleClientSecret']] as const) {
     const typed = v(id).trim();
     if (r.ok && typed) r = await window.bot.setSecret(name, typed === '-' ? '' : typed);
   }

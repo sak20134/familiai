@@ -17,6 +17,9 @@ const HINTS: Record<string, Hint> = {
   close_app: { words: /\b(close|quit|shut|exit|done with)\b/i, example: 'close discord -> close_app {"app":"discord"}' },
   force_close_app: { words: /\b(force|kill|frozen|froze|hung|not responding|isn'?t responding|terminate)\b/i, example: 'chrome froze, kill it -> force_close_app {"app":"chrome"}' },
   open_website: { words: /\b(website|site|go to|visit|browser|youtube|google|wikipedia|twitch|github|netflix|gmail|reddit|https?:|\.com|take me to|pull up)\b/i, example: 'go to youtube -> open_website {"url":"https://www.youtube.com"}' },
+  web_search: { words: /\b(search|google|look up|find out|who is|what is|latest|news|how (do|to))\b/i, example: 'search for pasta recipes -> web_search {"query":"pasta recipes"}' },
+  check_email: { words: /\b(emails?|mail|inbox|gmail|unread|messages? from)\b/i, example: 'check my email -> check_email {}' },
+  read_email: { words: /\b(read|open)\b.*\b(emails?|mail|message)\b/i, example: 'read that email -> read_email {"id":"<id from check_email>"}' },
   read_webpage: { words: /\b(read|summari[sz]e|what'?s on|what does .* say|look at|https?:|\.com|page)\b/i, example: 'read https://example.com and summarise -> read_webpage {"url":"https://example.com"}' },
   take_over: { words: /\b(take ?over|drive the computer|control the (keyboard|computer))\b/i, example: 'take over for 10 minutes -> take_over {"minutes":10}' },
   type_text: { words: /\b(type|write out|write:)\b/i, example: 'type: hello -> type_text {"text":"hello"}' },
@@ -44,7 +47,7 @@ const HINTS: Record<string, Hint> = {
 };
 
 /** Tools offered when nothing in the request stands out. */
-const DEFAULT_SET = ['open_app', 'close_app', 'open_website', 'list_apps', 'remember', 'recall', 'screen_time'];
+const DEFAULT_SET = ['open_app', 'close_app', 'open_website', 'web_search', 'list_apps', 'remember', 'recall', 'screen_time'];
 export const MAX_OFFERED = 6;
 
 export interface Pickable {

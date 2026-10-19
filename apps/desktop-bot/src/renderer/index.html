@@ -84,6 +84,12 @@
           <label class="field">API key <input id="cfg-api-key" type="password" maxlength="400" autocomplete="off" /></label>
         </div>
         <p id="brain-note" class="note"></p>
+        <h3>Email (Gmail, read-only)</h3>
+        <p class="note">The bot can only read your mail, never send or delete. You need your own free Google "desktop app" client: Google Cloud Console → APIs → turn on the Gmail API → Credentials → OAuth client ID → Desktop app. Paste its ID and secret here, save, then press Connect Gmail.</p>
+        <label class="field">Google client ID <input id="cfg-g-id" type="text" maxlength="200" /></label>
+        <label class="field">Google client secret <input id="cfg-g-secret" type="password" maxlength="400" autocomplete="off" /></label>
+        <button type="button" id="btn-gmail" class="wide">Connect Gmail</button>
+        <p id="gmail-note" class="note"></p>
         <h3>Stream</h3>
         <label class="field">OBS address <input id="cfg-obs" type="text" maxlength="200" /></label>
         <label class="field">OBS password <input id="cfg-obs-pass" type="password" maxlength="400" autocomplete="off" /></label>
