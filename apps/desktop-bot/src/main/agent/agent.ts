@@ -9,6 +9,7 @@ import { can } from '@familiai/core';
 import type { ActivityLog } from './activity';
 import type { Gate } from './gate';
 import type { MemoryStore } from './memory';
+import { checkArgs, examplesFor, keepKnown, pickTools } from './toolpick';
 import { openSession, type ModelConfig, type ModelTool, type ToolCall, type Turn } from './model';
 import type { Actor, Outcome, PendingView, Reply, ToolDef } from './types';
 
@@ -46,6 +47,8 @@ export interface AgentOptions {
 }
 
 const MAX_STEPS = 6;
+const MAX_REPAIRS = 2;
+const MAX_OFFERED = 6;
 const MAX_INPUT = 2000;
 const HISTORY_TURNS = 12;
 
@@ -195,20 +198,36 @@ export class Agent {
   // --- the AI model -----------------------------------------------------------------------
 
   private async think(text: string, actor: Actor, cfg: ModelConfig): Promise<Reply> {
-    const tools = this.toolList().filter((t) => (!t.roles || t.roles.includes(actor.role)) && (this.o.toolFilter?.(t) ?? true));
-    const modelTools: ModelTool[] = tools.map((t) => ({ name: t.spec.name, description: `${t.spec.description} (risk: ${t.spec.risk})`, input: t.input }));
     const past = this.history.get(actor.id) ?? [];
+    const tools = this.toolList().filter((t) => (!t.roles || t.roles.includes(actor.role)) && (this.o.toolFilter?.(t) ?? true));
+    // A small on-computer brain chooses better from a few fitting tools; a big online one gets all.
+    const narrow = 'brain' in cfg && !(past.length > 0 && text.trim().split(/\s+/).length < 3);
+    const offered = narrow ? pickTools(text, tools.map((t) => ({ t, name: t.spec.name, description: t.spec.description, input: t.input })), MAX_OFFERED).map((p) => p.t) : tools;
+    const modelTools: ModelTool[] = offered.map((t) => ({ name: t.spec.name, description: `${t.spec.description} (risk: ${t.spec.risk})`, input: t.input }));
     const outcomes: Outcome[] = [];
     let finalText = '';
+    let repairs = 0;
 
     try {
-      const session = openSession(cfg, this.systemPrompt(actor), [...past, { role: 'user', content: this.withContext(actor, text) }], modelTools);
+      const session = openSession(cfg, this.systemPrompt(actor), [...past, { role: 'user', content: this.withContext(actor, text, narrow ? examplesFor(modelTools) : []) }], modelTools);
       for (let step = 0; step < MAX_STEPS; step++) {
         const { text: said, calls } = await session.step();
         finalText = said || finalText;
         if (calls.length === 0) break;
         const results: Array<{ call: ToolCall; content: string }> = [];
         for (const call of calls) {
+          // Check the fields first. A wrong call is explained to the brain, which may try again
+          // (twice at most); nothing runs and nothing is logged until the call is well formed.
+          const def = this.tools.get(call.name);
+          if (def) {
+            call.args = keepKnown(def.input, call.args);
+            const problem = checkArgs(def.input, call.args);
+            if (problem && repairs < MAX_REPAIRS) {
+              repairs++;
+              results.push({ call, content: `FAILED: not run, because ${problem}. Call ${call.name} again with correct fields.` });
+              continue;
+            }
+          }
           const out = await this.call(call.name, call.args, actor);
           outcomes.push(out);
           results.push({ call, content: forModel(out) });
@@ -248,11 +267,12 @@ export class Agent {
   }
 
   /** What is true right now, put in front of this one request only. */
-  private withContext(actor: Actor, text: string): string {
+  private withContext(actor: Actor, text: string, examples: readonly string[] = []): string {
     const notes = this.o.memory.recall(actor, text, 6).map((m) => `- (${m.scope}) ${m.text}`);
     const lines = [
       `Time: ${new Date(this.now()).toString()}.`,
       ...(this.o.status?.() ?? []),
+      examples.length ? `Examples of calling tools:\n${examples.map((e) => `- ${e}`).join('\n')}` : '',
       notes.length ? `Saved notes ${actor.name} may see:\n${notes.join('\n')}` : '',
     ].filter(Boolean);
     return `[Right now]\n${lines.join('\n')}\n[Request]\n${text}`;
