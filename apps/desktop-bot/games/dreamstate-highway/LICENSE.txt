@@ -1,0 +1,71 @@
+Dreamstate Highway by THREELabs — https://github.com/THREELabs/threelabs.github.io
+Released under the MIT License (as declared in the project's package.json and README).
+Modified copy: YouTube and internet-radio streaming switched off (they can't load in this
+sandboxed page), outside photos hidden if they fail to load, and a shader warm-up crash fixed.
+
+MIT License
+
+Copyright (c) THREELabs
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Bundled libraries:
+
+=== three.js (MIT) ===
+The MIT License
+
+Copyright © 2010-2026 three.js authors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+=== nipplejs (MIT) ===
+
+=== @dimforge/rapier3d-compat (Apache License 2.0) ===
+Copyright Dimforge EURL. Licensed under the Apache License, Version 2.0: https://www.apache.org/licenses/LICENSE-2.0
+
+=== Weather sound recordings ===
+The game relies almost exclusively on procedural Web Audio synthesis for vehicle physics, screech, wind, and engine noise. Environmental sound recordings used for dynamic weather are licensed under Creative Commons and public domain:
+
+- **Rain Ambience (`public/audio/rain_loop.ogg`)**:
+  - **Source**: [Wikimedia Commons - File:Rain (1).ogg](https://commons.wikimedia.org/wiki/File:Rain_(1).ogg) / [PDSounds #682](http://www.pdsounds.org/sounds/rain)
+  - **Author**: ezwa
+  - **License**: Public Domain (CC0 / PD-author)
+- **Thunderstrike 1 (`public/audio/thunder_1.ogg`)**:
+  - **Source**: [Wikimedia Commons - File:Thunder 01.ogg](https://commons.wikimedia.org/wiki/File:Thunder_01.ogg)
+  - **Author**: [Amuzujoe](https://commons.wikimedia.org/wiki/User:Amuzujoe)
+  - **License**: Creative Commons Attribution-ShareAlike 4.0 International ([CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/))
+- **Thunderstrike 2 (`public/audio/thunder_2.ogg`)**:
+  - **Source**: [Wikimedia Commons - File:Thunder Claps.ogg](https://commons.wikimedia.org/wiki/File:Thunder_Claps.ogg)
+  - **Author**: [Jonathan Hunt (Interactii)](https://commons.wikimedia.org/wiki/User:Interactii)
