@@ -4,7 +4,7 @@ import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { BotSettings } from '../shared/api';
 
-export const DEFAULT_SETTINGS: BotSettings = { botName: 'Buddy', imagePath: null, quiet: false };
+export const DEFAULT_SETTINGS: BotSettings = { botName: 'Montex', imagePath: null, quiet: false };
 
 /** Accepts anything read from disk and returns safe settings. Bad fields fall back to defaults. */
 export function parseSettings(raw: unknown): BotSettings {

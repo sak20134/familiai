@@ -130,7 +130,7 @@
   async function refresh() {
     try {
       const s = await api('/api/state');
-      $('title').textContent = s.botName || 'Family Bot';
+      $('title').textContent = s.botName || 'Montex';
       $('who').textContent = 'You are ' + s.you.name + ' (' + s.you.role + ')';
       $('stopped').hidden = !s.stopped;
       $('takeover').hidden = !s.takeover.active;

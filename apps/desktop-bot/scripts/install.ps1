@@ -1,8 +1,10 @@
-# Installs (or updates) the Family AI desktop bot on Windows and adds the `familyai` command.
+# Installs (or updates) the Montex desktop bot on Windows and adds the `montex` command
+# (the old `familyai` command keeps working too).
 #
 #   irm https://raw.githubusercontent.com/sak20134/familiai/feat/desktop-bot/apps/desktop-bot/scripts/install.ps1 | iex
 #
-# It only touches %USERPROFILE%\familiai (the app) and %LOCALAPPDATA%\FamilyAI\bin (the command).
+# It only touches %USERPROFILE%\familiai (the app) and %LOCALAPPDATA%\FamilyAI\bin (the commands;
+# the folder keeps its old name so it stays on your PATH after an update).
 # No admin rights. Node.js is used if installed (22+); otherwise the official portable Node.js is
 # downloaded and checked against nodejs.org's published checksum before it is used.
 
@@ -20,7 +22,7 @@ $NodeDir = Join-Path $HomeDir '.node'
 
 function Say($t) { Write-Host "  $t" }
 Write-Host ''
-Write-Host '  Family AI desktop bot' -ForegroundColor Yellow
+Write-Host '  Montex desktop bot' -ForegroundColor Yellow
 Write-Host ''
 
 # --- Node.js -------------------------------------------------------------------------------
@@ -81,26 +83,28 @@ try {
   Say 'Installing (the first time takes a few minutes)...'
   & $npm ci --no-audit --no-fund
   if ($LASTEXITCODE -ne 0) { throw 'npm could not install the app.' }
-  # Builds the real app, named "Family AI Bot" with its own icon (no admin rights needed).
+  # Builds the real app, named "Montex" with its own icon (no admin rights needed).
   & $npm run pack
   if ($LASTEXITCODE -ne 0) { throw 'Packaging the app failed.' }
   # Puts the bot's brain in place now, so it can think the moment it first opens.
   & $node dist/setup-brain.js
 } finally { Pop-Location }
 
-# --- The familyai command ----------------------------------------------------------------------
+# --- The montex command (and the old familyai name) ---------------------------------------------
 New-Item -ItemType Directory -Force -Path $BinDir | Out-Null
-$cmdFile = Join-Path $BinDir 'familyai.cmd'
-Set-Content -Path $cmdFile -Encoding ASCII -Value "@echo off`r`n`"$node`" `"$App\bin\familyai.mjs`" %*"
+$cmdFile = Join-Path $BinDir 'montex.cmd'
+foreach ($name in 'montex', 'familyai') {
+  Set-Content -Path (Join-Path $BinDir "$name.cmd") -Encoding ASCII -Value "@echo off`r`n`"$node`" `"$App\bin\cli.mjs`" %*"
+}
 $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
 if (-not (($userPath -split ';') -contains $BinDir)) {
   [Environment]::SetEnvironmentVariable('Path', ($(if ($userPath) { "$userPath;" } else { '' }) + $BinDir), 'User')
-  Say "Added $BinDir to your PATH. Open a NEW terminal to use the familyai command."
+  Say "Added $BinDir to your PATH. Open a NEW terminal to use the montex command."
 }
 $env:PATH = "$BinDir;$env:PATH"
 
 Write-Host ''
-Say 'Installed. Start it with:  familyai start'
-Say 'Check the setup with:      familyai doctor'
+Say 'Installed. Start it with:  montex start'
+Say 'Check the setup with:      montex doctor'
 Write-Host ''
 & $cmdFile start

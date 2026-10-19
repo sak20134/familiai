@@ -8,6 +8,7 @@
     "build": "node scripts/build.mjs",
     "start": "npm run build && electron .",
     "icon": "node scripts/make-icon.mjs",
+    "brand": "node scripts/brand.mjs",
     "pack": "npm run build && electron-builder --dir",
     "dist": "npm run build && electron-builder",
     "typecheck": "tsc -p tsconfig.main.json && tsc -p tsconfig.renderer.json",
@@ -22,21 +23,22 @@
     "vitest": "^5.0.3"
   },
   "bin": {
+    "montex": "bin/cli.mjs",
     "familyai": "bin/familyai.mjs"
   },
   "dependencies": {
     "node-llama-cpp": "^3.22.2"
   },
-  "productName": "Family AI Bot",
+  "productName": "Montex",
   "author": {
-    "name": "Family AI",
+    "name": "Sakthi Yokesh",
     "email": "sakthivaradharajan2013@gmail.com"
   },
   "homepage": "https://github.com/sak20134/familiai",
   "build": {
-    "appId": "ai.familyai.desktopbot",
-    "productName": "Family AI Bot",
-    "copyright": "Family AI",
+    "appId": "com.sakthiyokesh.montex",
+    "productName": "Montex",
+    "copyright": "Copyright © 2026 Sakthi Yokesh",
     "directories": {
       "output": "release",
       "buildResources": "build"
@@ -59,14 +61,14 @@
       "target": [
         "nsis"
       ],
-      "icon": "build/icon.png"
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
-      "shortcutName": "Family AI Bot",
-      "artifactName": "Family-AI-Bot-Setup-${version}.${ext}"
+      "shortcutName": "Montex",
+      "artifactName": "Montex-Setup-${version}.${ext}"
     },
     "mac": {
       "target": [
@@ -79,7 +81,7 @@
       "target": [
         "AppImage"
       ],
-      "executableName": "family-ai-bot",
+      "executableName": "montex",
       "category": "Utility",
       "icon": "build/icon.png"
     }

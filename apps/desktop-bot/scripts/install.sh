@@ -1,9 +1,10 @@
 #!/bin/sh
-# Installs (or updates) the Family AI desktop bot on macOS or Linux and adds the `familyai` command.
+# Installs (or updates) the Montex desktop bot on macOS or Linux and adds the `montex` command
+# (the old `familyai` command keeps working too).
 #
 #   curl -fsSL https://raw.githubusercontent.com/sak20134/familiai/feat/desktop-bot/apps/desktop-bot/scripts/install.sh | sh
 #
-# It only touches ~/familiai (the app) and ~/.local/bin/familyai (the command). No sudo needed.
+# It only touches ~/familiai (the app) and ~/.local/bin (the commands). No sudo needed.
 # Needs Node.js 22 or newer (nodejs.org, or your package manager).
 set -eu
 
@@ -15,7 +16,7 @@ BIN_DIR="$HOME/.local/bin"
 say() { printf '  %s\n' "$*"; }
 fail() { printf '\n  %s\n\n' "$*" >&2; exit 1; }
 
-printf '\n  Family AI desktop bot\n\n'
+printf '\n  Montex desktop bot\n\n'
 
 command -v node >/dev/null 2>&1 || fail "Node.js is not installed. Get version 22 or newer from https://nodejs.org (or: brew install node / sudo apt install nodejs npm), then run this again."
 MAJOR=$(node -p 'process.versions.node.split(".")[0]')
@@ -39,18 +40,19 @@ APP="$HOME_DIR/apps/desktop-bot"
 cd "$APP"
 say "Installing (the first time takes a few minutes)..."
 npm ci --no-audit --no-fund
-# Builds the real app, named "Family AI Bot" with its own icon.
+# Builds the real app, named "Montex" with its own icon.
 npm run pack
 # Puts the bot's brain in place now, so it can think the moment it first opens.
 node dist/setup-brain.js || true
 
 mkdir -p "$BIN_DIR"
-chmod +x "$APP/bin/familyai.mjs"
-ln -sf "$APP/bin/familyai.mjs" "$BIN_DIR/familyai"
+chmod +x "$APP/bin/cli.mjs" "$APP/bin/familyai.mjs"
+ln -sf "$APP/bin/cli.mjs" "$BIN_DIR/montex"
+ln -sf "$APP/bin/familyai.mjs" "$BIN_DIR/familyai" # the old name still works
 
 case ":$PATH:" in
   *":$BIN_DIR:"*) ;;
-  *) say "Add $BIN_DIR to your PATH to use the familyai command, e.g.:"
+  *) say "Add $BIN_DIR to your PATH to use the montex command, e.g.:"
      say "  echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.profile && . ~/.profile" ;;
 esac
 
@@ -62,7 +64,7 @@ if [ "$(uname)" = "Darwin" ]; then
 fi
 
 printf '\n'
-say "Installed. Start it with:  familyai start"
-say "Check the setup with:      familyai doctor"
+say "Installed. Start it with:  montex start"
+say "Check the setup with:      montex doctor"
 printf '\n'
-"$BIN_DIR/familyai" start || true
+"$BIN_DIR/montex" start || true

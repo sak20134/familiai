@@ -2,6 +2,9 @@
 // copilot directly from this repo. Works the same on Windows, Mac and Linux.
 import { build } from 'esbuild';
 import { cpSync, mkdirSync } from 'node:fs';
+import { syncPackage } from './brand.mjs';
+
+syncPackage(); // brand.json is the one place for the bot's name; the packager reads package.json
 
 const alias = {
   '@familiai/core': '../../packages/core/src/index.ts',

@@ -1,4 +1,6 @@
-# Family AI Desktop Bot
+# Montex
+
+Montex is the Family AI desktop bot. By Sakthi Yokesh.
 
 An agentic AI friend that floats on your desktop (Windows, Mac, Linux). It answers precisely,
 does things on your computer, runs your live stream like a copilot, and follows your family's
@@ -21,32 +23,40 @@ curl -fsSL https://raw.githubusercontent.com/sak20134/familiai/feat/desktop-bot/
 The Windows installer gets Node.js for you if needed (checked against nodejs.org's checksum). On
 Mac and Linux, install Node.js 22 or newer first. After installing, open a new terminal.
 
-## The `familyai` command
+## The `montex` command
+
+The old `familyai` command still works and does the same thing.
 
 ```
-familyai start             start the bot
-familyai stop              close the bot
-familyai status            what is running, connected and waiting
-familyai talk [words]      talk to the bot (no words: chat mode)
-familyai pending           what is waiting for an OK
-familyai approve a1        OK a waiting request (familyai reject a1 says no)
-familyai halt              STOP everything until someone says "resume"
-familyai doctor            check the setup
-familyai update            get the newest version
+montex start               start the bot
+montex stop                close the bot
+montex status              what is running, connected and waiting
+montex talk [words]        talk to the bot (no words: chat mode)
+montex pending             what is waiting for an OK
+montex approve a1          OK a waiting request (montex reject a1 says no)
+montex halt                STOP everything until someone says "resume"
+montex doctor              check the setup
+montex update              get the newest version
 ```
 
 Already have the code? In this folder: `npm install`, then `npm start` (or `npm run pack` to build
-the real "Family AI Bot" app with its own name and icon, which `familyai start` then uses).
+the real "Montex" app with its own name and icon, which `montex start` then uses).
 
 ## The app and its icon
 
-The installers build the bot as its own program, **Family AI Bot**, with an original pixel-cat
+The installers build the bot as its own program, **Montex**, with an original pixel-cat
 icon (drawn by `scripts/make-icon.mjs` from `src/renderer/pixelcat.json`; the same cat floats on
-your desktop). Task Manager and the firewall show "Family AI Bot". `npm run dist` makes a full
+your desktop). Task Manager and the firewall show "Montex". `npm run dist` makes a full
 installer (`.exe`, `.dmg` or `.AppImage`) in `release/`.
 
-The app is not code-signed yet, so Windows shows "Unknown publisher" and SmartScreen may ask once.
-Showing your own name as publisher needs a paid code-signing certificate.
+The app's author, company and copyright say **Sakthi Yokesh** (see `brand.json`). It is not
+code-signed yet, so Windows may still show "Unknown publisher" and SmartScreen may ask once.
+Windows shows a verified publisher name only for a paid code-signing certificate.
+
+### Changing the name
+
+The name lives in one file, `brand.json`. Edit it and run `npm run brand` (the build does this
+too): it updates the app name, command, author and copyright in `package.json`.
 
 ## Its brain
 
@@ -80,7 +90,7 @@ Ask anything else in your own words ("read this page and tell me the price",
 - Children and guests can ask, but anything above low risk waits for a parent.
 - The bot says "done" only when the result is confirmed; otherwise it says what really happened.
 - **Stop switch**: the red ■ button, `Ctrl+Alt+S` anywhere, saying "stop", the phone's STOP button
-  or `familyai halt`. Only a parent can resume. Parents' screen-time limits keep working while stopped.
+  or `montex halt`. Only a parent can resume. Parents' screen-time limits keep working while stopped.
 - **Take-over** ends by itself after the time you gave (60 minutes at most). While it is on, the
   bot glows red with a banner.
 - The **Activity** tab lists everything asked and done. It is never edited, so deleted things still show.
